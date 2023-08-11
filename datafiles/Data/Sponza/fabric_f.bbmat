@@ -1,0 +1,22 @@
+{
+    "__MaterialName": "BBMOD_MATERIAL_DEFAULT",
+    "RenderQueue": "Default",
+    "BaseOpacityMultiplier": {
+        "Red": 119.952,
+        "Green": 119.952,
+        "Blue": 119.952,
+        "Alpha": 1
+    },
+    "Shaders": {
+        "Shadows": "BBMOD_SHADER_DEFAULT_DEPTH",
+        "DepthOnly": "BBMOD_SHADER_DEFAULT_DEPTH",
+        "Id": "BBMOD_SHADER_INSTANCE_ID",
+        "ReflectionCapture": "BBMOD_SHADER_DEFAULT"
+    },
+    "Repeat": true, "Mipmapping": true, "Filtering": true,
+    "__Textures": {
+        "BaseOpacity": "textures/sponza_curtain_green_BaseColor.jpg",
+        "NormalRoughness": "textures/sponza_curtain_Normal.jpg",
+        "MetallicAO": "textures/sponza_curtain_MetallicRoughness.jpg"
+    }
+}
