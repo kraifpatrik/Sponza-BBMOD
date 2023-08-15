@@ -19,6 +19,7 @@ y += lengthdir_y(_forward, camera.Direction) + lengthdir_y(_right, camera.Direct
 z += _up;
 
 camera.AspectRatio = window_get_width() / window_get_height();
+camera.Exposure += (mouse_wheel_up() - mouse_wheel_down()) * 0.1;
 camera.update(delta_time);
 
 if (keyboard_check(ord("F")))

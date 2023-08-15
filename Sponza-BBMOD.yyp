@@ -223,6 +223,7 @@
     {"id":{"name":"BBMOD_SprWhite","path":"sprites/BBMOD_SprWhite/BBMOD_SprWhite.yy",},},
     {"id":{"name":"__bbmod_default_material","path":"scripts/__bbmod_default_material/__bbmod_default_material.yy",},},
     {"id":{"name":"BBMOD_ShDefault","path":"shaders/BBMOD_ShDefault/BBMOD_ShDefault.yy",},},
+    {"id":{"name":"SprColorGrading","path":"sprites/SprColorGrading/SprColorGrading.yy",},},
     {"id":{"name":"BBMOD_AddVec3OnCollisionModule","path":"scripts/BBMOD_AddVec3OnCollisionModule/BBMOD_AddVec3OnCollisionModule.yy",},},
     {"id":{"name":"BBMOD_Quaternion","path":"scripts/BBMOD_Quaternion/BBMOD_Quaternion.yy",},},
     {"id":{"name":"BBMOD_Importer","path":"scripts/BBMOD_Importer/BBMOD_Importer.yy",},},

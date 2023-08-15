@@ -392,9 +392,9 @@ function BBMOD_BaseRenderer() constructor
 
 		static _renderQueues = bbmod_render_queues_get();
 
-		bbmod_shader_unset_global(BBMOD_U_SHADOWMAP);
-		bbmod_shader_set_global_f(BBMOD_U_SHADOWMAP_ENABLE_PS, 0.0);
-		bbmod_shader_set_global_f(BBMOD_U_SHADOWMAP_ENABLE_VS, 0.0);
+		//bbmod_shader_unset_global(BBMOD_U_SHADOWMAP);
+		//bbmod_shader_set_global_f(BBMOD_U_SHADOWMAP_ENABLE_PS, 0.0);
+		//bbmod_shader_set_global_f(BBMOD_U_SHADOWMAP_ENABLE_VS, 0.0);
 
 		bbmod_render_pass_set(BBMOD_ERenderPass.ReflectionCapture);
 		var _cubemap = __cubemap;

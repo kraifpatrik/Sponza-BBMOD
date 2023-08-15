@@ -1,11 +1,12 @@
 # Sponza BBMOD
 > Crytek Sponza rendered in GameMaker using BBMOD
 
-![Screenshot](Screenshot.png)
+![Screenshot](Screenshot.jpg)
 
 ## Controls
 * WASDEQ - move
 * LMB - enable mouselook
+* MW - change camera exposure
 * Esc - disable mouselook
 * F - change sun direction to camera's forward vector
 * Space - recapture reflection probe

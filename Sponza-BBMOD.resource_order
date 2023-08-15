@@ -66,6 +66,7 @@
     {"name":"BBMOD_Node","order":3,"path":"scripts/BBMOD_Node/BBMOD_Node.yy",},
     {"name":"BBMOD_SprWhite","order":21,"path":"sprites/BBMOD_SprWhite/BBMOD_SprWhite.yy",},
     {"name":"__bbmod_default_material","order":4,"path":"scripts/__bbmod_default_material/__bbmod_default_material.yy",},
+    {"name":"SprColorGrading","order":139,"path":"sprites/SprColorGrading/SprColorGrading.yy",},
     {"name":"BBMOD_AddVec3OnCollisionModule","order":2,"path":"scripts/BBMOD_AddVec3OnCollisionModule/BBMOD_AddVec3OnCollisionModule.yy",},
     {"name":"BBMOD_Quaternion","order":3,"path":"scripts/BBMOD_Quaternion/BBMOD_Quaternion.yy",},
     {"name":"BBMOD_Importer","order":16,"path":"scripts/BBMOD_Importer/BBMOD_Importer.yy",},

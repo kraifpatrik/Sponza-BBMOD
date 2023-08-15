@@ -1,4 +1,4 @@
-BBMOD_SHADER_DEFAULT.add_variant(Shader1,  BBMOD_VFORMAT_DEFAULT);
+BBMOD_SHADER_DEFAULT.add_variant(Shader1, BBMOD_VFORMAT_DEFAULT);
 
 z = 0;
 
@@ -7,19 +7,21 @@ renderer.UseAppSurface = true;
 renderer.EnableShadows = true;
 renderer.EnableGBuffer = true;
 renderer.EnableSSAO = true;
-renderer.SSAORadius = 32.0;
-renderer.SSAODepthRange = 5.0;
+renderer.SSAORadius = 64.0;
+renderer.SSAODepthRange = 10.0;
 renderer.SSAOPower = 2.0;
 
 postProcessor = new BBMOD_PostProcessor();
 postProcessor.Vignette = 1.0;
 postProcessor.ChromaticAberration = 3.0;
 postProcessor.Antialiasing = BBMOD_EAntialiasing.FXAA;
+postProcessor.ColorGradingLUT = sprite_get_texture(SprColorGrading, 0);
 renderer.PostProcessor = postProcessor;
 
 camera = new BBMOD_Camera();
 camera.FollowObject = self;
 camera.MouseSensitivity = 0.5;
+camera.Exposure = 2.9;
 
 modSponza = BBMOD_RESOURCE_MANAGER.load("Data/Sponza/Sponza.bbmod", undefined, function (_err, _res) {
 	if (_res)
