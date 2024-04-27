@@ -74,11 +74,22 @@ function BBMOD_ReflectionProbe(_position=undefined, _sprite=undefined) construct
 	/// value is `true`.
 	Enabled = true;
 
+	/// @var {Bool} If `true` then shadows are enabled when capturing the
+	/// reflection probe, which takes longer to render. Default is `false`.
+	/// @note {@link BBMOD_BaseRenderer.EnableShadows} also needs to be enabled
+	/// for this to have effect!
+	EnableShadows = true;
+
 	/// @var {Struct.BBMOD_Vec3} The position in the world. Default value is
 	/// `(0, 0, 0)`.
 	/// @readonly
 	/// @see BBMOD_ReflectionProbe.set_position
 	Position = _position ?? new BBMOD_Vec3();
+
+	/// @var {Bool} If `true` then the reflection probe has infinite extents,
+	/// otherwise they are defined by the {@link BBMOD_ReflectionProbe.Size}
+	/// property. Default value is `false`.
+	Infinite = false;
 
 	/// @var {Struct.BBMOD_Vec3} Size of AABB on each axis that marks the
 	/// probe's area of influence. The probe is active only when camera enters
@@ -101,12 +112,16 @@ function BBMOD_ReflectionProbe(_position=undefined, _sprite=undefined) construct
 	Sprite = _sprite;
 
 	/// @var {Real} The resolution of a cubemap used when capturing the probe.
+	/// Default is 128 or the height of the sprite from which was the reflection
+	/// probe created.
 	Resolution = (_sprite != undefined) ? sprite_get_height(_sprite) : 128;
 
 	/// @var {Bool} If `true` then the reflection probe needs to be re-captured.
 	/// Equals `true` when `_sprite` is not passed to the constructor. **Setting
 	/// this to `true` every frame has severe impact on performance, even for a
 	/// single reflection probe!**
+	/// @note This is automatically reset to `false` when the reflection probe is
+	/// captured.
 	NeedsUpdate = (_sprite == undefined);
 
 	/// @func set_position(_position)
@@ -254,6 +269,10 @@ function bbmod_reflection_probe_find(_position)
 			if (!Enabled)
 			{
 				continue;
+			}
+			if (Infinite)
+			{
+				return self;
 			}
 			var _min = Position.Sub(Size);
 			if (_position.X < _min.X

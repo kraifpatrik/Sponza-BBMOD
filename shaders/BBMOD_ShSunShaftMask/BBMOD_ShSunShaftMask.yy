@@ -1,0 +1,12 @@
+{
+  "$GMShader":"",
+  "%Name":"BBMOD_ShSunShaftMask",
+  "name":"BBMOD_ShSunShaftMask",
+  "parent":{
+    "name":"SunShafts",
+    "path":"folders/BBMOD/PostProcessing/SunShafts.yy",
+  },
+  "resourceType":"GMShader",
+  "resourceVersion":"2.0",
+  "type":1,
+}

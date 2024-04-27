@@ -606,6 +606,30 @@ function BBMOD_Terrain(_heightmap=undefined, _subimage=0, _chunkSize=128) constr
 				var _n4Y = __normalSmoothY[# _i, _j + 1];
 				var _n4Z = __normalSmoothZ[# _i, _j + 1];
 
+				// TODO: Optimize
+				var _sign = -1.0;
+				var _axisX = new BBMOD_Vec3(1.0, 0.0, 0.0);
+
+				var _n1 = new BBMOD_Vec3(_n1X, _n1Y, _n1Z);
+				var _b1 = _n1.Cross(_axisX).NormalizeSelf();
+				var _t1 = _n1.Cross(_b1).NormalizeSelf();
+				var _s1 = (_n1.Dot(_t1) < 0.0) ? -_sign : _sign;
+
+				var _n2 = new BBMOD_Vec3(_n2X, _n2Y, _n2Z);
+				var _b2 = _n2.Cross(_axisX).NormalizeSelf();
+				var _t2 = _n2.Cross(_b2).NormalizeSelf();
+				var _s2 = (_n2.Dot(_t2) < 0.0) ? -_sign : _sign;
+
+				var _n3 = new BBMOD_Vec3(_n3X, _n3Y, _n3Z);
+				var _b3 = _n3.Cross(_axisX).NormalizeSelf();
+				var _t3 = _n3.Cross(_b3).NormalizeSelf();
+				var _s3 = (_n3.Dot(_t3) < 0.0) ? -_sign : _sign;
+
+				var _n4 = new BBMOD_Vec3(_n4X, _n4Y, _n4Z);
+				var _b4 = _n4.Cross(_axisX).NormalizeSelf();
+				var _t4 = _n4.Cross(_b4).NormalizeSelf();
+				var _s4 = (_n4.Dot(_t4) < 0.0) ? -_sign : _sign;
+
 				// 1
 				// |\
 				// 4-3
@@ -616,17 +640,17 @@ function BBMOD_Terrain(_heightmap=undefined, _subimage=0, _chunkSize=128) constr
 				vertex_position_3d(_vbuffer, _x1, _y1, _z1);
 				vertex_normal(_vbuffer, _n1X, _n1Y, _n1Z);
 				vertex_texcoord(_vbuffer, _u1, _v1);
-				vertex_float4(_vbuffer, _tangentNorm, 0.0, _tangent1z, 1.0);
+				vertex_float4(_vbuffer, _t1.X, _t1.Y, _t1.Z, _s1);
 
 				vertex_position_3d(_vbuffer, _x3, _y3, _z3);
 				vertex_normal(_vbuffer, _n3X, _n3Y, _n3Z);
 				vertex_texcoord(_vbuffer, _u3, _v3);
-				vertex_float4(_vbuffer, _tangentNorm, 0.0, _tangent1z, 1.0);
+				vertex_float4(_vbuffer, _t3.X, _t3.Y, _t3.Z, _s3);
 
 				vertex_position_3d(_vbuffer, _x4, _y4, _z4);
 				vertex_normal(_vbuffer, _n4X, _n4Y, _n4Z);
 				vertex_texcoord(_vbuffer, _u4, _v4);
-				vertex_float4(_vbuffer, _tangentNorm, 0.0, _tangent1z, 1.0);
+				vertex_float4(_vbuffer, _t4.X, _t4.Y, _t4.Z, _s4);
 
 				// 1-2
 				//  \|
@@ -638,17 +662,17 @@ function BBMOD_Terrain(_heightmap=undefined, _subimage=0, _chunkSize=128) constr
 				vertex_position_3d(_vbuffer, _x1, _y1, _z1);
 				vertex_normal(_vbuffer, _n1X, _n1Y, _n1Z);
 				vertex_texcoord(_vbuffer, _u1, _v1);
-				vertex_float4(_vbuffer, _tangentNorm, 0.0, _tangent1z, 1.0);
+				vertex_float4(_vbuffer, _t1.X, _t1.Y, _t1.Z, _s1);
 
 				vertex_position_3d(_vbuffer, _x2, _y2, _z2);
 				vertex_normal(_vbuffer, _n2X, _n2Y, _n2Z);
 				vertex_texcoord(_vbuffer, _u2, _v2);
-				vertex_float4(_vbuffer, _tangentNorm, 0.0, _tangent1z, 1.0);
+				vertex_float4(_vbuffer, _t2.X, _t2.Y, _t2.Z, _s2);
 
 				vertex_position_3d(_vbuffer, _x3, _y3, _z3);
 				vertex_normal(_vbuffer, _n3X, _n3Y, _n3Z);
 				vertex_texcoord(_vbuffer, _u3, _v3);
-				vertex_float4(_vbuffer, _tangentNorm, 0.0, _tangent1z, 1.0);
+				vertex_float4(_vbuffer, _t3.X, _t3.Y, _t3.Z, _s3);
 
 				++_j;
 			}
@@ -699,6 +723,32 @@ function BBMOD_Terrain(_heightmap=undefined, _subimage=0, _chunkSize=128) constr
 			return self;
 		}
 
+		var _shader = Material.get_shader(BBMOD_ERenderPass.GBuffer)
+			?? Material.get_shader(BBMOD_ERenderPass.Forward);
+		if (_shader == undefined)
+		{
+			return self;
+		}
+
+		var _layersPerDrawCall = _shader.LayersPerDrawCall;
+		var _layers = [];
+		var _layerIndices = [];
+		for (var i = 0; i < min(_shader.MaxLayers, 5); ++i)
+		{
+			var _layer = Layer[i];
+			if (_layer != undefined)
+			{
+				array_push(_layers, _layer);
+				array_push(_layerIndices, i);
+			}
+		}
+
+		var _layerCount = array_length(_layers);
+		if (_layerCount == 0)
+		{
+			return self;
+		}
+
 		var _matrix = matrix_build(Position.X, Position.Y, Position.Z, 0, 0, 0, Scale.X, Scale.Y, Scale.Z);
 		var _normalMatrix = bbmod_matrix_build_normalmatrix(_matrix);
 		matrix_set(matrix_world, _matrix);
@@ -726,14 +776,24 @@ function BBMOD_Terrain(_heightmap=undefined, _subimage=0, _chunkSize=128) constr
 			_chunkToY = clamp(ceil(_camJ + ChunkRadius), 0, _chunksY);
 		}
 
-		var _shaderCurrent = shader_current();
-		var _uSplatmap = shader_get_sampler_index(_shaderCurrent, BBMOD_U_SPLATMAP);
-		var _uSplatmapIndex = shader_get_uniform(_shaderCurrent, BBMOD_U_SPLATMAP_INDEX);
-		var _uColormap = shader_get_sampler_index(_shaderCurrent, BBMOD_U_COLORMAP);
-		var _uTextureScale = shader_get_uniform(_shaderCurrent, BBMOD_U_TEXTURE_SCALE);
-		var _uNormalMatrix = shader_get_uniform(_shaderCurrent, BBMOD_U_NORMAL_MATRIX);
-		var _uNormalW = shader_get_sampler_index(_shaderCurrent, BBMOD_U_NORMAL_W);
-		var _uIsRoughness = shader_get_uniform(_shaderCurrent, BBMOD_U_IS_ROUGHNESS);
+		var _shaderRaw = shader_current();
+		var _uSplatmap = shader_get_sampler_index(_shaderRaw, BBMOD_U_SPLATMAP);
+		var _uSplatmapIndex = array_create(_layersPerDrawCall, -1);
+		var _uColormap = shader_get_sampler_index(_shaderRaw, BBMOD_U_COLORMAP);
+		var _uTextureScale = shader_get_uniform(_shaderRaw, BBMOD_U_TEXTURE_SCALE);
+		var _uNormalMatrix = shader_get_uniform(_shaderRaw, BBMOD_U_NORMAL_MATRIX);
+		var _uTerrainBaseOpacity = array_create(_layersPerDrawCall, -1);
+		var _uTerrainNormalW = array_create(_layersPerDrawCall, -1);
+		var _uTerrainIsRoughness = array_create(_layersPerDrawCall, -1);
+
+		for (var i = 0; i < _layersPerDrawCall; ++i)
+		{
+			var _iStr = string(i);
+			_uSplatmapIndex[@ i] = shader_get_uniform(_shaderRaw, BBMOD_U_SPLATMAP_INDEX + _iStr);
+			_uTerrainBaseOpacity[@ i] = shader_get_sampler_index(_shaderRaw, BBMOD_U_TERRAIN_BASE_OPACITY + _iStr);
+			_uTerrainNormalW[@ i] = shader_get_sampler_index(_shaderRaw, BBMOD_U_TERRAIN_NORMAL_W + _iStr);
+			_uTerrainIsRoughness[@ i] = shader_get_uniform(_shaderRaw, BBMOD_U_TERRAIN_IS_ROUGHNESS + _iStr);
+		}
 
 		texture_set_stage(_uSplatmap, Splatmap);
 		texture_set_stage(_uColormap, Colormap);
@@ -742,34 +802,65 @@ function BBMOD_Terrain(_heightmap=undefined, _subimage=0, _chunkSize=128) constr
 
 		gpu_push_state();
 
-		var _isFirstLayer = true;
-		var _isSecondLayer = true;
+		var _baseOpacityFirst = -1;
+		var _normalWDefault = sprite_get_texture(BBMOD_SprDefaultNormalW, 0);
 		var _renderPass = bbmod_render_pass_get();
 
-		var _l = 0;
-		repeat (5)
+		for (var _call = 0; _call < _layerCount; _call += _layersPerDrawCall)
 		{
-			var _layer = Layer[_l];
-			if (_layer != undefined)
+			if (_call == 0)
 			{
-				var _layerNormalRoughness = _layer[$ "NormalRoughness"];
+				//gpu_set_blendenable(false);
+				//gpu_set_colorwriteenable(true, true, true, true);
+			}
+			else
+			{
+				//gpu_set_blendenable(true);
+				//gpu_set_colorwriteenable(true, true, true, false);
 
-				if (_isFirstLayer)
+				if (_renderPass != BBMOD_ERenderPass.Forward
+					&& _renderPass != BBMOD_ERenderPass.ReflectionCapture
+					&& _renderPass != BBMOD_ERenderPass.GBuffer)
 				{
-					gpu_set_blendenable(false);
-					gpu_set_colorwriteenable(true, true, true, true);
-					_isFirstLayer = false;
+					break;
 				}
-				else if (_isSecondLayer)
-				{
-					gpu_set_blendenable(true);
-					gpu_set_colorwriteenable(true, true, true, false);
-					_isSecondLayer = false;
-				}
+			}
 
-				shader_set_uniform_i(_uSplatmapIndex, _l - 1);
-				texture_set_stage(_uNormalW, _layerNormalRoughness ?? (_layer[$ "NormalSmoothness"] ?? sprite_get_texture(BBMOD_SprDefaultNormalW, 0)));
-				shader_set_uniform_f(_uIsRoughness, (_layerNormalRoughness != undefined) ? 1.0 : 0.0);
+			for (var i = 0; i < _layersPerDrawCall; ++i)
+			{
+				var _layerCallIndex = _call + i;
+				if (_layerCallIndex < _layerCount)
+				{
+					var _layer = _layers[_layerCallIndex];
+					var _layerNormalRoughness = _layer[$ "NormalRoughness"];
+					var _baseOpacity = _layer.BaseOpacity;
+
+					if (global.__bbmodMaterialProps != undefined)
+					{
+						var _baseOpacityProp = global.__bbmodMaterialProps.get(BBMOD_U_BASE_OPACITY);
+						if (_baseOpacityProp != undefined)
+						{
+							_baseOpacity = _baseOpacityProp;
+						}
+					}
+
+					if (i == 0)
+					{
+						_baseOpacityFirst = _baseOpacity;
+					}
+					else
+					{
+						texture_set_stage(_uTerrainBaseOpacity[i], _baseOpacity);
+					}
+
+					shader_set_uniform_i(_uSplatmapIndex[i], _layerIndices[_call + i] - 1);
+					texture_set_stage(_uTerrainNormalW[i], _layerNormalRoughness ?? (_layer[$ "NormalSmoothness"] ?? _normalWDefault));
+					shader_set_uniform_f(_uTerrainIsRoughness[i], (_layerNormalRoughness != undefined) ? 1.0 : 0.0);
+				}
+				else
+				{
+					shader_set_uniform_i(_uSplatmapIndex[i], -1);
+				}
 
 				var _i = _chunkFromX;
 				repeat (_chunkToX - _chunkFromX)
@@ -780,20 +871,13 @@ function BBMOD_Terrain(_heightmap=undefined, _subimage=0, _chunkSize=128) constr
 						var _chunk = Chunks[# _i, _j];
 						if (_chunk != undefined)
 						{
-							vertex_submit(_chunk, pr_trianglelist, _layer.BaseOpacity);
+							vertex_submit(_chunk, pr_trianglelist, _baseOpacityFirst);
 						}
 						++_j;
 					}
 					++_i;
 				}
-
-				if (_renderPass != BBMOD_ERenderPass.Forward
-					&& _renderPass != BBMOD_ERenderPass.ReflectionCapture)
-				{
-					break;
-				}
 			}
-			++_l;
 		}
 
 		gpu_pop_state();
@@ -808,6 +892,32 @@ function BBMOD_Terrain(_heightmap=undefined, _subimage=0, _chunkSize=128) constr
 	/// @return {Struct.BBMOD_Terrain} Returns `self`.
 	static render = function ()
 	{
+		var _shader = Material.get_shader(BBMOD_ERenderPass.GBuffer)
+			?? Material.get_shader(BBMOD_ERenderPass.Forward);
+		if (_shader == undefined)
+		{
+			return self;
+		}
+
+		var _layersPerDrawCall = _shader.LayersPerDrawCall;
+		var _layers = [];
+		var _layerIndices = [];
+		for (var i = 0; i < min(_shader.MaxLayers, 5); ++i)
+		{
+			var _layer = Layer[i];
+			if (_layer != undefined)
+			{
+				array_push(_layers, _layer);
+				array_push(_layerIndices, i);
+			}
+		}
+
+		var _layerCount = array_length(_layers);
+		if (_layerCount == 0)
+		{
+			return self;
+		}
+
 		var _matrix = matrix_build(Position.X, Position.Y, Position.Z, 0, 0, 0, Scale.X, Scale.Y, Scale.Z);
 		var _normalMatrix = bbmod_matrix_build_normalmatrix(_matrix);
 		var _chunksX = ds_grid_width(Chunks);
@@ -834,6 +944,7 @@ function BBMOD_Terrain(_heightmap=undefined, _subimage=0, _chunkSize=128) constr
 		}
 
 		RenderQueue
+			.SetMaterialProps(global.__bbmodMaterialProps)
 			.ApplyMaterial(Material, VertexFormat)
 			.BeginConditionalBlock()
 			.SetSampler(BBMOD_U_SPLATMAP, Splatmap)
@@ -842,68 +953,99 @@ function BBMOD_Terrain(_heightmap=undefined, _subimage=0, _chunkSize=128) constr
 			.SetUniformMatrixArray(BBMOD_U_NORMAL_MATRIX, _normalMatrix)
 			.SetWorldMatrix(_matrix);
 
-		var _isFirstLayer = true;
-		var _isSecondLayer = true;
+		var _baseOpacityFirst = -1;
+		var _normalWDefault = sprite_get_texture(BBMOD_SprDefaultNormalW, 0);
 
-		var _l = 0;
-		repeat (5)
+		for (var _call = 0; _call < _layerCount; _call += _layersPerDrawCall)
 		{
-			var _layer = Layer[_l];
-			if (_layer != undefined)
+			if (_call == 0)
 			{
-				var _layerNormalRoughness = _layer[$ "NormalRoughness"];
-
-				if (_isFirstLayer)
-				{
-					RenderQueue
-						.SetGpuBlendEnable(false)
-						.SetGpuColorWriteEnable(true, true, true, true);
-					_isFirstLayer = false;
-				}
-				else if (_isSecondLayer)
-				{
-					RenderQueue
-						.CheckRenderPass((1 << BBMOD_ERenderPass.Forward) | (1 << BBMOD_ERenderPass.ReflectionCapture))
-						.BeginConditionalBlock()
-						.SetGpuBlendEnable(true)
-						.SetGpuColorWriteEnable(true, true, true, false);
-					_isSecondLayer = false;
-				}
-
+				//RenderQueue
+				//	.SetGpuBlendEnable(false)
+				//	.SetGpuColorWriteEnable(true, true, true, true);
+			}
+			else
+			{
 				RenderQueue
-					.SetGpuZWriteEnable(_l == 0)
-					.SetGpuZFunc((_l == 0) ? cmpfunc_lessequal : cmpfunc_equal)
-					.SetUniformInt(BBMOD_U_SPLATMAP_INDEX, _l - 1)
-					.SetSampler(BBMOD_U_NORMAL_W, _layerNormalRoughness ?? (_layer[$ "NormalSmoothness"] ?? sprite_get_texture(BBMOD_SprDefaultNormalW, 0)))
-					.SetUniformFloat(BBMOD_U_IS_ROUGHNESS, (_layerNormalRoughness != undefined) ? 1.0 : 0.0);
+					.CheckRenderPass((1 << BBMOD_ERenderPass.Forward)
+						| (1 << BBMOD_ERenderPass.ReflectionCapture)
+						| (1 << BBMOD_ERenderPass.GBuffer))
+					.BeginConditionalBlock()
+					//.SetGpuBlendEnable(true)
+					//.SetGpuColorWriteEnable(true, true, true, false)
+					;
+			}
 
-				var _i = _chunkFromX;
-				repeat (_chunkToX - _chunkFromX)
+			RenderQueue
+				.SetGpuZWriteEnable(_call == 0)
+				.SetGpuZFunc((_call == 0) ? cmpfunc_lessequal : cmpfunc_equal);
+
+			for (var i = 0; i < _layersPerDrawCall; ++i)
+			{
+				var _iStr = string(i);
+				var _layerCallIndex = _call + i;
+				if (_layerCallIndex < _layerCount)
 				{
-					var _j = _chunkFromY;
-					repeat (_chunkToY - _chunkFromY)
+					var _layer = _layers[_layerCallIndex];
+					var _layerNormalRoughness = _layer[$ "NormalRoughness"];
+					var _baseOpacity = _layer.BaseOpacity;
+
+					if (global.__bbmodMaterialProps != undefined)
 					{
-						var _chunk = Chunks[# _i, _j];
-						if (_chunk != undefined)
+						var _baseOpacityProp = global.__bbmodMaterialProps.get(BBMOD_U_TERRAIN_BASE_OPACITY + _iStr);
+						if (_baseOpacityProp != undefined)
 						{
-							RenderQueue.SubmitVertexBuffer(_chunk, pr_trianglelist, _layer.BaseOpacity);
+							_baseOpacity = _baseOpacityProp;
 						}
-						++_j;
 					}
-					++_i;
-				}
 
-				if (!_isSecondLayer)
+					if (i == 0)
+					{
+						_baseOpacityFirst = _baseOpacity;
+					}
+					else
+					{
+						RenderQueue.SetSampler(BBMOD_U_TERRAIN_BASE_OPACITY + _iStr, _baseOpacity);
+					}
+
+					RenderQueue
+						.SetUniformInt(BBMOD_U_SPLATMAP_INDEX + _iStr, _layerIndices[_call + i] - 1)
+						.SetSampler(BBMOD_U_TERRAIN_NORMAL_W + _iStr, _layerNormalRoughness ?? (_layer[$ "NormalSmoothness"] ?? _normalWDefault))
+						.SetUniformFloat(BBMOD_U_TERRAIN_IS_ROUGHNESS + _iStr, (_layerNormalRoughness != undefined) ? 1.0 : 0.0);
+				}
+				else
 				{
-					RenderQueue.EndConditionalBlock();
+					RenderQueue
+						.SetUniformInt(BBMOD_U_SPLATMAP_INDEX + _iStr, -1);
 				}
 			}
-			++_l;
+
+			var _i = _chunkFromX;
+			repeat (_chunkToX - _chunkFromX)
+			{
+				var _j = _chunkFromY;
+				repeat (_chunkToY - _chunkFromY)
+				{
+					var _chunk = Chunks[# _i, _j];
+					if (_chunk != undefined)
+					{
+						RenderQueue.SubmitVertexBuffer(_chunk, pr_trianglelist, _baseOpacityFirst);
+					}
+					++_j;
+				}
+				++_i;
+			}
+
+			if (_call != 0)
+			{
+				RenderQueue.EndConditionalBlock();
+			}
 		}
 
 		RenderQueue
 			.ResetMaterial()
-			.EndConditionalBlock();
+			.EndConditionalBlock()
+			.ResetMaterialProps();
 
 		return self;
 	};

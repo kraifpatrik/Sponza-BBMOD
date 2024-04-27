@@ -144,6 +144,14 @@ uniform float bbmod_ShadowmapArea;
 uniform float bbmod_ShadowmapBias;
 // The index of the light that casts shadows. Use -1 for the directional light.
 uniform float bbmod_ShadowCasterIndex;
+// Offsets vertex position by its normal scaled by this value
+uniform float bbmod_ShadowmapNormalOffsetPS;
+
+////////////////////////////////////////////////////////////////////////////////
+// HDR rendering
+
+// 0.0 = apply exposure, tonemap and gamma correct, 1.0 = output raw values
+uniform float bbmod_HDR;
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -384,7 +392,7 @@ void DoSpotLightPS(
 	float epsilon = dcosInner - dcosOuter;
 	float intensity = clamp((theta - dcosOuter) / epsilon, 0.0, 1.0);
 	subsurface += xCheapSubsurface(m.Subsurface, V, N, L, color);
-	color *= (1.0 - shadow) * intensity * att;
+	color *= (1.0 - shadow) * intensity * att * max(dot(N, L), 0.0);
 	diffuse += color;
 	specular += color * SpecularGGX(m, N, V, L);
 }
@@ -562,6 +570,11 @@ Material UnpackMaterial(
 		);
 	m.Normal = normalize(TBN * (normalW.rgb * 2.0 - 1.0));
 
+	if (!gl_FrontFacing)
+	{
+		m.Normal *= -1.0;
+	}
+
 	if (isRoughness == 1.0)
 	{
 		m.Roughness = mix(0.1, 0.9, normalW.a);
@@ -607,6 +620,9 @@ Material UnpackMaterial(
 /// @return Point projected to view-space.
 vec3 xProject(vec2 tanAspect, vec2 texCoord, float depth)
 {
+#if !(defined(_YY_HLSL11_) || defined(_YY_PSSL_))
+	tanAspect.y *= -1.0;
+#endif
 	return vec3(tanAspect * (texCoord * 2.0 - 1.0) * depth, depth);
 }
 
@@ -772,9 +788,12 @@ void PBRShader(Material material, float depth)
 	// Fog
 	Fog(depth);
 
-	Exposure();
-	TonemapReinhard();
-	GammaCorrect();
+	if (bbmod_HDR == 0.0)
+	{
+		Exposure();
+		TonemapReinhard();
+		GammaCorrect();
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -806,5 +825,4 @@ void main()
 	}
 
 	PBRShader(material, v_vPosition.z);
-
 }

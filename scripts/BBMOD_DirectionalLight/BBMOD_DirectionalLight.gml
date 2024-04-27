@@ -28,6 +28,11 @@ function BBMOD_DirectionalLight(_color=undefined, _direction=undefined)
 	/// @var {Real} The area captured by the shadowmap. Defaults to 1024.
 	ShadowmapArea = 1024;
 
+	/// @var {Real} If `true` then the shadowmap is captured from the camera's
+	/// position instead of from the directional light's position. Default
+	/// value is `true` for backwards compatibility.
+	ShadowmapFollowsCamera = true;
+
 	__getZFar = __get_shadowmap_zfar;
 
 	__getViewMatrix = __get_shadowmap_view;
@@ -35,6 +40,8 @@ function BBMOD_DirectionalLight(_color=undefined, _direction=undefined)
 	__getProjMatrix = __get_shadowmap_projection;
 
 	__getShadowmapMatrix = __get_shadowmap_matrix;
+
+	__shadowmapMatrixPrev = new BBMOD_Matrix();
 
 	static __get_shadowmap_zfar = function ()
 	{
@@ -45,14 +52,31 @@ function BBMOD_DirectionalLight(_color=undefined, _direction=undefined)
 	static __get_shadowmap_view = function ()
 	{
 		gml_pragma("forceinline");
-		var _position = bbmod_camera_get_position();
+
+		var _position = ShadowmapFollowsCamera
+			? bbmod_camera_get_position()
+			: Position;
+
+		// Source: https://www.junkship.net/News/2020/11/22/shadow-of-a-doubt-part-2
+		var _texelScale = 2.0 / ShadowmapResolution;
+		var _invTexelScale = 1.0 / _texelScale;
+		var _projectedCenter = new BBMOD_Vec4(_position.X, _position.Y, _position.Z, 1.0)
+			.TransformSelf(__shadowmapMatrixPrev);
+		var _w = _projectedCenter.W;
+		var _x = floor((_projectedCenter.X / _w) * _invTexelScale) * _texelScale;
+		var _y = floor((_projectedCenter.Y / _w) * _invTexelScale) * _texelScale;
+		var _z = _projectedCenter.Z / _w;
+		var _correctedCenter = new BBMOD_Vec4(_x, _y, _z, 1.0)
+			.TransformSelf(__shadowmapMatrixPrev.Inverse());
+		var _center = _correctedCenter.Scale(1.0 / _correctedCenter.W);
+
 		return matrix_build_lookat(
-			_position.X,
-			_position.Y,
-			_position.Z,
-			_position.X + Direction.X,
-			_position.Y + Direction.Y,
-			_position.Z + Direction.Z,
+			_center.X,
+			_center.Y,
+			_center.Z,
+			_center.X + Direction.X,
+			_center.Y + Direction.Y,
+			_center.Z + Direction.Z,
 			0.0, 0.0, 1.0); // TODO: Find the up vector
 	};
 
@@ -66,9 +90,11 @@ function BBMOD_DirectionalLight(_color=undefined, _direction=undefined)
 	static __get_shadowmap_matrix = function ()
 	{
 		gml_pragma("forceinline");
-		return matrix_multiply(
+		var _matrix = matrix_multiply(
 			__getViewMatrix(),
 			__getProjMatrix());
+		__shadowmapMatrixPrev = new BBMOD_Matrix(_matrix);
+		return _matrix;
 	};
 }
 

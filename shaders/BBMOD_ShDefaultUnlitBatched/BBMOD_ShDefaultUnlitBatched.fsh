@@ -99,6 +99,12 @@ uniform vec3 bbmod_LightDirectionalDir;
 uniform vec4 bbmod_LightDirectionalColor;
 
 ////////////////////////////////////////////////////////////////////////////////
+// HDR rendering
+
+// 0.0 = apply exposure, tonemap and gamma correct, 1.0 = output raw values
+uniform float bbmod_HDR;
+
+////////////////////////////////////////////////////////////////////////////////
 //
 // Includes
 //
@@ -234,6 +240,11 @@ Material UnpackMaterial(
 		);
 	m.Normal = normalize(TBN * (normalW.rgb * 2.0 - 1.0));
 
+	if (!gl_FrontFacing)
+	{
+		m.Normal *= -1.0;
+	}
+
 	if (isRoughness == 1.0)
 	{
 		m.Roughness = mix(0.1, 0.9, normalW.a);
@@ -280,9 +291,13 @@ void UnlitShader(Material material, float depth)
 	gl_FragColor.a = material.Opacity;
 	// Soft particles
 	Fog(depth);
-	Exposure();
-	TonemapReinhard();
-	GammaCorrect();
+
+	if (bbmod_HDR == 0.0)
+	{
+		Exposure();
+		TonemapReinhard();
+		GammaCorrect();
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -311,5 +326,4 @@ void main()
 	}
 
 	UnlitShader(material, v_vPosition.z);
-
 }

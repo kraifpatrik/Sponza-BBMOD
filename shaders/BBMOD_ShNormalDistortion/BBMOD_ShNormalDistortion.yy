@@ -1,0 +1,12 @@
+{
+  "$GMShader":"",
+  "%Name":"BBMOD_ShNormalDistortion",
+  "name":"BBMOD_ShNormalDistortion",
+  "parent":{
+    "name":"NormalDistortion",
+    "path":"folders/BBMOD/PostProcessing/NormalDistortion.yy",
+  },
+  "resourceType":"GMShader",
+  "resourceVersion":"2.0",
+  "type":1,
+}

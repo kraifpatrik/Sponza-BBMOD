@@ -1,0 +1,12 @@
+{
+  "$GMShader":"",
+  "%Name":"BBMOD_ShLumaSharpen",
+  "name":"BBMOD_ShLumaSharpen",
+  "parent":{
+    "name":"LumaSharpen",
+    "path":"folders/BBMOD/PostProcessing/LumaSharpen.yy",
+  },
+  "resourceType":"GMShader",
+  "resourceVersion":"2.0",
+  "type":1,
+}

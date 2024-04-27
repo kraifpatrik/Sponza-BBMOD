@@ -1,0 +1,13 @@
+{
+  "$GMScript":"",
+  "%Name":"BBMOD_ReinhardTonemapEffect",
+  "isCompatibility":false,
+  "isDnD":false,
+  "name":"BBMOD_ReinhardTonemapEffect",
+  "parent":{
+    "name":"ReinhardTonemap",
+    "path":"folders/BBMOD/PostProcessing/ReinhardTonemap.yy",
+  },
+  "resourceType":"GMScript",
+  "resourceVersion":"2.0",
+}

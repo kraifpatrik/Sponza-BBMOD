@@ -1,22 +1,40 @@
 {
+    "Filtering": true,
+    "TextureOffset": {
+        "Y": 0.0,
+        "X": 0.0
+    },
+    "TextureScale": {
+        "Y": 1.0,
+        "X": 1.0
+    },
+    "ShadowmapBias": 0.0,
+    "Repeat": true,
     "__MaterialName": "BBMOD_MATERIAL_DEFAULT",
+    "__Textures": {
+        "NormalRoughness": ".\\Material__25_NormalRoughness.png",
+        "BaseOpacity": ".\\Material__25_BaseOpacity.png",
+        "MetallicAO": ".\\Material__25_MetallicAO.png"
+    },
     "RenderQueue": "Default",
+    "BlendMode": 0.0,
+    "ZFunc": 4.0,
+    "AlphaBlend": false,
+    "Shaders": {
+        "ReflectionCapture": "BBMOD_SHADER_DEFAULT",
+        "Shadows": "BBMOD_SHADER_DEFAULT_DEPTH",
+        "Deferred": "BBMOD_SHADER_DEFAULT_DEPTH",
+        "Id": "BBMOD_SHADER_INSTANCE_ID"
+    },
+    "Culling": 2.0,
+    "Mipmapping": "mip_on",
     "BaseOpacityMultiplier": {
         "Red": 119.952,
         "Green": 119.952,
         "Blue": 119.952,
-        "Alpha": 1
+        "Alpha": 1.0
     },
-    "Shaders": {
-        "Shadows": "BBMOD_SHADER_DEFAULT_DEPTH",
-        "DepthOnly": "BBMOD_SHADER_DEFAULT_DEPTH",
-        "Id": "BBMOD_SHADER_INSTANCE_ID",
-        "ReflectionCapture": "BBMOD_SHADER_DEFAULT"
-    },
-    "Repeat": true, "Mipmapping": true, "Filtering": true,
-    "__Textures": {
-        "BaseOpacity": "textures/lion_BaseColor.jpg",
-        "NormalRoughness": "textures/lion_Normal.jpg",
-        "MetallicAO": "textures/lion_MetallicRoughness.jpg"
-    }
+    "ZWrite": true,
+    "AlphaTest": 1.0,
+    "ZTest": true
 }

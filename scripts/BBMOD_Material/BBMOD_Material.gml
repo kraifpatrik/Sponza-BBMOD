@@ -66,6 +66,8 @@ global.__bbmodMaterialCurrent = undefined;
 ///
 /// @extends BBMOD_Resource
 ///
+/// @implements {BBMOD_IMaterial}
+///
 /// @desc Base class for materials.
 ///
 /// @param {Struct.BBMOD_Shader} [_shader] A shader that the material uses in
@@ -332,9 +334,24 @@ function BBMOD_Material(_shader=undefined)
 				var _shader = _shaders[$ _passName];
 				if (is_string(_shader))
 				{
-					_shader = bbmod_shader_get(_shader);
+					if (_shader == "undefined")
+					{
+						remove_shader(_pass);
+					}
+					else
+					{
+						_shader = bbmod_shader_get(_shader);
+						set_shader(_pass, _shader);
+					}
 				}
-				set_shader(_pass, _shader);
+				else if (_shader == undefined)
+				{
+					remove_shader(_pass);
+				}
+				else
+				{
+					set_shader(_pass, _shader);
+				}
 			}
 		}
 
@@ -616,7 +633,11 @@ function BBMOD_Material(_shader=undefined)
 		if (global.__bbmodMaterialCurrent != self)
 		{
 			// TODO: GPU settings override per render pass!
-			var _isShadows = (bbmod_render_pass_get() == BBMOD_ERenderPass.Shadows);
+			var _renderPass = bbmod_render_pass_get();
+			var _disableBlending = (_renderPass == BBMOD_ERenderPass.Shadows
+				|| _renderPass == BBMOD_ERenderPass.DepthOnly
+				|| _renderPass == BBMOD_ERenderPass.GBuffer
+				|| _renderPass == BBMOD_ERenderPass.Id);
 
 			if (global.__bbmodMaterialCurrent != undefined)
 			{
@@ -630,23 +651,26 @@ function BBMOD_Material(_shader=undefined)
 				with (_shader)
 				{
 					on_set();
-					__bbmod_shader_set_globals(_shaderRaw);
+					bbmod_shader_set_globals(_shaderRaw);
 				}
 				_shaderChanged = false;
 			}
 
-			gpu_set_blendmode(_isShadows ? bm_normal : BlendMode);
-			gpu_set_blendenable(_isShadows ? false : AlphaBlend);
+			gpu_set_blendmode(_disableBlending ? bm_normal : BlendMode);
+			gpu_set_blendenable(_disableBlending ? false : AlphaBlend);
 			gpu_set_cullmode(Culling);
-			gpu_set_zwriteenable(_isShadows ? true : ZWrite);
-			gpu_set_ztestenable(_isShadows ? true : ZTest);
+			gpu_set_zwriteenable(/*_disableBlending ? true : */ZWrite);
+			gpu_set_ztestenable(/*_disableBlending ? true : */ZTest);
 			gpu_set_zfunc(ZFunc);
 			gpu_set_tex_mip_enable(Mipmapping);
-			gpu_set_tex_mip_bias(MipBias);
-			gpu_set_tex_mip_filter(MipFilter);
-			gpu_set_tex_min_mip(MipMin);
-			gpu_set_tex_max_mip(MipMax);
-			gpu_set_tex_max_aniso(Anisotropy);
+			if (Mipmapping)
+			{
+				gpu_set_tex_mip_bias(MipBias);
+				gpu_set_tex_mip_filter(MipFilter);
+				gpu_set_tex_min_mip(MipMin);
+				gpu_set_tex_max_mip(MipMax);
+				gpu_set_tex_max_aniso(Anisotropy);
+			}
 			gpu_set_tex_filter(Filtering);
 			gpu_set_tex_repeat(Repeat);
 
@@ -659,7 +683,7 @@ function BBMOD_Material(_shader=undefined)
 			with (_shader)
 			{
 				on_set();
-				__bbmod_shader_set_globals(_shaderRaw);
+				bbmod_shader_set_globals(_shaderRaw);
 			}
 			_shader.set_material(self);
 		}
@@ -763,6 +787,7 @@ function BBMOD_Material(_shader=undefined)
 		if (__baseOpacitySprite != undefined)
 		{
 			sprite_delete(__baseOpacitySprite);
+			__baseOpacitySprite = undefined;
 		}
 		return undefined;
 	};
@@ -775,17 +800,15 @@ function BBMOD_Material(_shader=undefined)
 
 /// @func bbmod_material_reset()
 ///
-/// @desc Resets the current material to `undefined`. Every block of code
-/// rendering models must start and end with this function!
+/// @desc Resets the current material to `undefined`. Must be called after every
+/// block of code that submits models or render queues!
 ///
 /// @example
 /// ```gml
-/// bbmod_material_reset();
-///
-/// // Render static batch of trees
+/// // Submit static batch of trees
 /// treeBatch.submit(matTree);
 ///
-/// // Render characters
+/// // Submit characters
 /// var _world = matrix_get(matrix_world);
 /// with (OCharacter)
 /// {
@@ -794,8 +817,15 @@ function BBMOD_Material(_shader=undefined)
 /// }
 /// matrix_set(matrix_world, _world);
 ///
+/// // Reset materials after submits!
 /// bbmod_material_reset();
 /// ```
+///
+/// @see BBMOD_Model.submit
+/// @see BBMOD_AnimationPlayer.submit
+/// @see BBMOD_DynamicBatch.submit
+/// @see BBMOD_Terrain.submit
+/// @see BBMOD_RenderQueue.submit
 /// @see BBMOD_Material.reset
 function bbmod_material_reset()
 {

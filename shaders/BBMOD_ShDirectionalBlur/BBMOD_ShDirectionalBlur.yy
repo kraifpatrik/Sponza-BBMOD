@@ -1,0 +1,12 @@
+{
+  "$GMShader":"",
+  "%Name":"BBMOD_ShDirectionalBlur",
+  "name":"BBMOD_ShDirectionalBlur",
+  "parent":{
+    "name":"DirectionalBlur",
+    "path":"folders/BBMOD/PostProcessing/DirectionalBlur.yy",
+  },
+  "resourceType":"GMShader",
+  "resourceVersion":"2.0",
+  "type":1,
+}

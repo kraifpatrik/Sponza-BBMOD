@@ -1,11 +1,13 @@
 {
-  "resourceType": "GMScript",
-  "resourceVersion": "1.0",
-  "name": "bbmod_lerp_delta_time",
-  "isCompatibility": false,
-  "isDnD": false,
-  "parent": {
-    "name": "Math",
-    "path": "folders/BBMOD/Core/Math.yy",
+  "$GMScript":"",
+  "%Name":"bbmod_lerp_delta_time",
+  "isCompatibility":false,
+  "isDnD":false,
+  "name":"bbmod_lerp_delta_time",
+  "parent":{
+    "name":"Utils",
+    "path":"folders/BBMOD/Core/Utils.yy",
   },
+  "resourceType":"GMScript",
+  "resourceVersion":"2.0",
 }

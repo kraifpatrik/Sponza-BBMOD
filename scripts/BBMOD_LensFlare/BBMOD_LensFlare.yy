@@ -1,0 +1,13 @@
+{
+  "$GMScript":"",
+  "%Name":"BBMOD_LensFlare",
+  "isCompatibility":false,
+  "isDnD":false,
+  "name":"BBMOD_LensFlare",
+  "parent":{
+    "name":"LensFlares",
+    "path":"folders/BBMOD/PostProcessing/LensFlares.yy",
+  },
+  "resourceType":"GMScript",
+  "resourceVersion":"2.0",
+}

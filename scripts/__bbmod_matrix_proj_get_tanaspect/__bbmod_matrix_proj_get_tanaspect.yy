@@ -1,0 +1,13 @@
+{
+  "$GMScript":"",
+  "%Name":"__bbmod_matrix_proj_get_tanaspect",
+  "isCompatibility":false,
+  "isDnD":false,
+  "name":"__bbmod_matrix_proj_get_tanaspect",
+  "parent":{
+    "name":"Utils",
+    "path":"folders/BBMOD/Core/Utils.yy",
+  },
+  "resourceType":"GMScript",
+  "resourceVersion":"2.0",
+}

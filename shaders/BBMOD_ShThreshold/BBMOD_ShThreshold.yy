@@ -1,0 +1,12 @@
+{
+  "$GMShader":"",
+  "%Name":"BBMOD_ShThreshold",
+  "name":"BBMOD_ShThreshold",
+  "parent":{
+    "name":"PostProcessing",
+    "path":"folders/BBMOD/PostProcessing.yy",
+  },
+  "resourceType":"GMShader",
+  "resourceVersion":"2.0",
+  "type":1,
+}

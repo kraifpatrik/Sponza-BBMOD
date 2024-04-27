@@ -1,16 +1,35 @@
 {
+    "Filtering": true,
+    "TextureOffset": {
+        "Y": 0.0,
+        "X": 0.0
+    },
+    "TextureScale": {
+        "Y": 1.0,
+        "X": 1.0
+    },
+    "ShadowmapBias": 0.0,
+    "Repeat": true,
     "__MaterialName": "BBMOD_MATERIAL_DEFAULT",
     "RenderQueue": "Default",
-    "BaseOpacityMultiplier": {
-        "Red": 153,
-        "Green": 153,
-        "Blue": 153,
-        "Alpha": 1
-    },
+    "BlendMode": 0.0,
+    "ZFunc": 4.0,
+    "AlphaBlend": false,
     "Shaders": {
+        "ReflectionCapture": "BBMOD_SHADER_DEFAULT",
         "Shadows": "BBMOD_SHADER_DEFAULT_DEPTH",
-        "DepthOnly": "BBMOD_SHADER_DEFAULT_DEPTH",
-        "Id": "BBMOD_SHADER_INSTANCE_ID",
-        "ReflectionCapture": "BBMOD_SHADER_DEFAULT"
-    }
+        "Deferred": "BBMOD_SHADER_DEFAULT_DEPTH",
+        "Id": "BBMOD_SHADER_INSTANCE_ID"
+    },
+    "Culling": 2.0,
+    "Mipmapping": "mip_on",
+    "BaseOpacityMultiplier": {
+        "Red": 153.0,
+        "Green": 153.0,
+        "Blue": 153.0,
+        "Alpha": 1.0
+    },
+    "ZWrite": true,
+    "AlphaTest": 1.0,
+    "ZTest": true
 }

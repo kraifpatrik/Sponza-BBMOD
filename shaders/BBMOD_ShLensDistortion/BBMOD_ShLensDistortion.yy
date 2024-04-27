@@ -1,0 +1,12 @@
+{
+  "$GMShader":"",
+  "%Name":"BBMOD_ShLensDistortion",
+  "name":"BBMOD_ShLensDistortion",
+  "parent":{
+    "name":"LensDistortion",
+    "path":"folders/BBMOD/PostProcessing/LensDistortion.yy",
+  },
+  "resourceType":"GMShader",
+  "resourceVersion":"2.0",
+  "type":1,
+}

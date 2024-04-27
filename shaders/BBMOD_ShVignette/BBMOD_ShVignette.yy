@@ -1,0 +1,12 @@
+{
+  "$GMShader":"",
+  "%Name":"BBMOD_ShVignette",
+  "name":"BBMOD_ShVignette",
+  "parent":{
+    "name":"Vignette",
+    "path":"folders/BBMOD/PostProcessing/Vignette.yy",
+  },
+  "resourceType":"GMShader",
+  "resourceVersion":"2.0",
+  "type":1,
+}

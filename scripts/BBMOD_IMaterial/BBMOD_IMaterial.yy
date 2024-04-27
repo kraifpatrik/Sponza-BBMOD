@@ -1,0 +1,13 @@
+{
+  "$GMScript":"",
+  "%Name":"BBMOD_IMaterial",
+  "isCompatibility":false,
+  "isDnD":false,
+  "name":"BBMOD_IMaterial",
+  "parent":{
+    "name":"Base",
+    "path":"folders/BBMOD/Core/Base.yy",
+  },
+  "resourceType":"GMScript",
+  "resourceVersion":"2.0",
+}

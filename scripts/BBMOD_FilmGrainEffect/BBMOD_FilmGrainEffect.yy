@@ -1,0 +1,13 @@
+{
+  "$GMScript":"",
+  "%Name":"BBMOD_FilmGrainEffect",
+  "isCompatibility":false,
+  "isDnD":false,
+  "name":"BBMOD_FilmGrainEffect",
+  "parent":{
+    "name":"FilmGrain",
+    "path":"folders/BBMOD/PostProcessing/FilmGrain.yy",
+  },
+  "resourceType":"GMScript",
+  "resourceVersion":"2.0",
+}

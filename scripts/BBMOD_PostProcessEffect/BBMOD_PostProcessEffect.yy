@@ -1,0 +1,13 @@
+{
+  "$GMScript":"",
+  "%Name":"BBMOD_PostProcessEffect",
+  "isCompatibility":false,
+  "isDnD":false,
+  "name":"BBMOD_PostProcessEffect",
+  "parent":{
+    "name":"PostProcessing",
+    "path":"folders/BBMOD/PostProcessing.yy",
+  },
+  "resourceType":"GMScript",
+  "resourceVersion":"2.0",
+}

@@ -55,7 +55,6 @@
 /// animationPlayer.update(delta_time);
 ///
 /// /// @desc Draw event of OCharacter
-/// bbmod_material_reset();
 /// animationPlayer.render();
 /// bbmod_material_reset();
 /// ```
@@ -138,7 +137,7 @@ function BBMOD_AnimationPlayer(_model, _paused=false) constructor
 	/// @see BBMOD_AnimationPlayer.get_node_transform
 	/// @private
 	__nodeTransform = array_create(BBMOD_MAX_BONES * 8, 0.0);
-
+ 
 	/// @var {Array<Real>} An array containing transforms of all bones.
 	/// Used to pass current model pose as a uniform to a vertex shader.
 	/// @see BBMOD_AnimationPlayer.get_transform
@@ -574,9 +573,10 @@ function BBMOD_AnimationPlayer(_model, _paused=false) constructor
 	///
 	/// @desc Immediately submits the animated model for rendering.
 	///
-	/// @param {Array<Struct.BBMOD_Material>} [_materials] An array of materials,
-	/// one for each material slot of the model. If not specified, then
-	/// {@link BBMOD_Model.Materials} is used. Defaults to `undefined`.
+	/// @param {Array<Struct.BBMOD_IMaterial>, Array<Pointer.Texture>} [_materials]
+	/// An array of either material structs or just textures if you don't wish to
+	/// use BBMOD's material system. If `undefined`, then {@link BBMOD_Model.Materials}
+	/// is used. Defaults to `undefined`.
 	///
 	/// @return {Struct.BBMOD_AnimationPlayer} Returns `self`.
 	static submit = function (_materials=undefined)

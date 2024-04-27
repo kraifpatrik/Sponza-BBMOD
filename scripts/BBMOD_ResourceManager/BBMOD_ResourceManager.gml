@@ -157,7 +157,7 @@ function BBMOD_ResourceManager() constructor
 		return _res;
 	};
 
-	/// @func load(_path[, _sha1[, _onLoad]])
+	/// @func load(_path[, _sha1][, _onLoad])
 	///
 	/// @desc Asynchronnously loads a resource from a file or retrieves
 	/// a reference to it, if it is already loaded.
@@ -192,6 +192,12 @@ function BBMOD_ResourceManager() constructor
 	/// @see BBMOD_ResourceManager.LoadMaterials
 	static load = function (_path, _sha1=undefined, _onLoad=undefined)
 	{
+		if (is_method(_sha1))
+		{
+			_onLoad = _sha1;
+			_sha1 = undefined;
+		}
+
 		var _resources = __resources;
 
 		if (ds_map_exists(_resources, _path))
@@ -281,6 +287,7 @@ function BBMOD_ResourceManager() constructor
 
 			// Create the material and apply props.
 			_res = bbmod_material_get(_materialName).clone().from_json(_json);
+			_res.__manager = self;
 			_resources[? _path] = _res;
 
 			if (_onLoad != undefined)
@@ -321,7 +328,7 @@ function BBMOD_ResourceManager() constructor
 			return undefined;
 		}
 
-		_res.Manager = self;
+		_res.__manager = self;
 		var _manager = self;
 		var _context = {
 			Path: _path,
@@ -340,6 +347,7 @@ function BBMOD_ResourceManager() constructor
 				// Try to load its materials
 				var _modelName = filename_change_ext(filename_name(Path), "");
 				var _counter = { Value: 0 };
+				var _args = [];
 
 				for (var i = array_length(_res.MaterialNames) - 1; i >= 0; --i)
 				{
@@ -357,7 +365,7 @@ function BBMOD_ResourceManager() constructor
 							{
 								Model.Materials[@ Index] = _res;
 							}
-							if (--Counter.Value == 0
+							if (Counter.Value-- == 0
 								&& Callback != undefined)
 							{
 								Callback(undefined, Model);
@@ -368,8 +376,15 @@ function BBMOD_ResourceManager() constructor
 					if (file_exists(_matPath))
 					{
 						// With "Model_" prefix
-						++_counter.Value;
-						Manager.load(_matPath, undefined, _callback);
+						if (Manager.has(_matPath))
+						{
+							_res.Materials[@ i] = Manager.get(_matPath);
+						}
+						else
+						{
+							++_counter.Value;
+							array_push(_args, _matPath, _callback);
+						}
 					}
 					else
 					{
@@ -378,10 +393,24 @@ function BBMOD_ResourceManager() constructor
 
 						if (file_exists(_matPath))
 						{
-							++_counter.Value;
-							Manager.load(_matPath, undefined, _callback);
+							if (Manager.has(_matPath))
+							{
+								_res.Materials[@ i] = Manager.get(_matPath);
+							}
+							else
+							{
+								++_counter.Value;
+								array_push(_args, _matPath, _callback);
+							}
 						}
 					}
+				}
+
+				var a = 0;
+				repeat (array_length(_args) / 2)
+				{
+					Manager.load(_args[a], undefined, _args[a + 1]);
+					a += 2;
 				}
 
 				// The last loaded material will do the callback

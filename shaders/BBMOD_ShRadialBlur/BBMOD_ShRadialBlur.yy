@@ -1,0 +1,12 @@
+{
+  "$GMShader":"",
+  "%Name":"BBMOD_ShRadialBlur",
+  "name":"BBMOD_ShRadialBlur",
+  "parent":{
+    "name":"RadialBlur",
+    "path":"folders/BBMOD/PostProcessing/RadialBlur.yy",
+  },
+  "resourceType":"GMShader",
+  "resourceVersion":"2.0",
+  "type":1,
+}
