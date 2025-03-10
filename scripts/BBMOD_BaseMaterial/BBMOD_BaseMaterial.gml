@@ -12,8 +12,7 @@
 /// specific render passes.
 ///
 /// @see BBMOD_Shader
-function BBMOD_BaseMaterial(_shader=undefined)
-	: BBMOD_Material(_shader) constructor
+function BBMOD_BaseMaterial(_shader = undefined): BBMOD_Material(_shader) constructor
 {
 	static Material_copy = copy;
 	static Material_to_json = to_json;
@@ -38,6 +37,11 @@ function BBMOD_BaseMaterial(_shader=undefined)
 	/// harsh transition does not look good. Default value is 0, which means no
 	/// smooth transition.
 	ShadowmapBias = 0.0;
+
+	/// @var {Bool} Whether the material is two-sided. If the material is
+	/// two-sided, normal vectors of backfaces are flipped before shading.
+	/// Default value is `true`.
+	TwoSided = true;
 
 	static copy = function (_dest)
 	{

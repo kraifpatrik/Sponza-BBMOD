@@ -60,7 +60,6 @@ function bbmod_shader_set_texture_scale(_shader, _scale)
 		_scale.X, _scale.Y);
 }
 
-
 /// @macro {String} Name of a vertex shader uniform of type
 /// `vec4[2 * BBMOD_MAX_BONES]` that holds bone transformation data.
 /// @see BBMOD_MAX_BONES
@@ -148,7 +147,7 @@ function bbmod_shader_set_batch_data(_shader, _data)
 /// @param {Asset.GMShader} _shader The shader to set the uniform for.
 /// @param {Id.Instance} [_id] The instance ID. If `undefined`,
 /// then the value set by {@link bbmod_set_instance_id} is used.
-function bbmod_shader_set_instance_id(_shader, _id=undefined)
+function bbmod_shader_set_instance_id(_shader, _id = undefined)
 {
 	gml_pragma("forceinline");
 	_id ??= global.__bbmodInstanceID;
@@ -347,7 +346,7 @@ function bbmod_shader_set_emissive(_shader, _texture)
 /// @param {Pointer.Texture} [_texture] The new RGBM encoded lightmap
 /// texture. If not specified, defaults to the one configured using
 /// {@link bbmod_lightmap_set}.
-function bbmod_shader_set_lightmap(_shader, _texture=global.__bbmodLightmap)
+function bbmod_shader_set_lightmap(_shader, _texture = global.__bbmodLightmap)
 {
 	gml_pragma("forceinline");
 	var _uLightmap = shader_get_sampler_index(_shader, BBMOD_U_LIGHTMAP);
@@ -371,9 +370,12 @@ function bbmod_shader_set_lightmap(_shader, _texture=global.__bbmodLightmap)
 function bbmod_shader_set_base_opacity_uv(_shader, _uv)
 {
 	gml_pragma("forceinline");
-	shader_set_uniform_f_array(
+	shader_set_uniform_f(
 		shader_get_uniform(_shader, BBMOD_U_BASE_OPACITY_UV),
-		_uv);
+		_uv[0],
+		_uv[1],
+		_uv[2],
+		_uv[3]);
 }
 
 /// @macro {String} Name of a fragment shader uniform of type `vec4` that holds
@@ -381,26 +383,110 @@ function bbmod_shader_set_base_opacity_uv(_shader, _uv)
 /// page.
 #macro BBMOD_U_NORMAL_W_UV "bbmod_NormalWUV"
 
+/// @func bbmod_shader_set_normal_w_uv(_shader, _uv)
+///
+/// @desc Sets the {@link BBMOD_U_NORMAL_W_UV} uniform to given values.
+///
+/// @param {Asset.GMShader} _shader The shader to set the uniforms for.
+/// @param {Array<Real>} _uv The new base opacity texture UVs as `[left, top, right bottom]`
+/// (same as function `texture_get_uvs` returns).
 function bbmod_shader_set_normal_w_uv(_shader, _uv)
 {
 	gml_pragma("forceinline");
-	shader_set_uniform_f_array(
+	shader_set_uniform_f(
 		shader_get_uniform(_shader, BBMOD_U_NORMAL_W_UV),
-		_uv);
+		_uv[0],
+		_uv[1],
+		_uv[2],
+		_uv[3]);
 }
-
 
 /// @macro {String} Name of a fragment shader uniform of type `vec4` that holds
 /// top left and bottom right coordinates of the material texture on its texture
 /// page.
 #macro BBMOD_U_MATERIAL_UV "bbmod_MaterialUV"
 
+/// @func bbmod_shader_set_material_uv(_shader, _uv)
+///
+/// @desc Sets the {@link BBMOD_U_MATERIAL_UV} uniform to given values.
+///
+/// @param {Asset.GMShader} _shader The shader to set the uniforms for.
+/// @param {Array<Real>} _uv The new base opacity texture UVs as `[left, top, right bottom]`
+/// (same as function `texture_get_uvs` returns).
 function bbmod_shader_set_material_uv(_shader, _uv)
 {
 	gml_pragma("forceinline");
-	shader_set_uniform_f_array(
+	shader_set_uniform_f(
 		shader_get_uniform(_shader, BBMOD_U_MATERIAL_UV),
-		_uv);
+		_uv[0],
+		_uv[1],
+		_uv[2],
+		_uv[3]);
+}
+
+/// @macro {String} Name of a fragment shader uniform of type `vec4` that holds
+/// top left and bottom right coordinates of the subsurface texture on its
+/// texture page.
+#macro BBMOD_U_SUBSURFACE_UV "bbmod_SubsurfaceUV"
+
+/// @func bbmod_shader_set_subsurface_uv(_shader, _uv)
+///
+/// @desc Sets the {@link BBMOD_U_SUBSURFACE_UV} uniform to given values.
+///
+/// @param {Asset.GMShader} _shader The shader to set the uniforms for.
+/// @param {Array<Real>} _uv The new base opacity texture UVs as `[left, top, right bottom]`
+/// (same as function `texture_get_uvs` returns).
+function bbmod_shader_set_subsurface_uv(_shader, _uv)
+{
+	gml_pragma("forceinline");
+	shader_set_uniform_f(
+		shader_get_uniform(_shader, BBMOD_U_SUBSURFACE_UV),
+		_uv[0],
+		_uv[1],
+		_uv[2],
+		_uv[3]);
+}
+
+/// @macro {String} Name of a fragment shader uniform of type `vec4` that holds
+/// top left and bottom right coordinates of the emissive texture on its texture
+/// page.
+#macro BBMOD_U_EMISSIVE_UV "bbmod_EmissiveUV"
+
+/// @func bbmod_shader_set_emissive_uv(_shader, _uv)
+///
+/// @desc Sets the {@link BBMOD_U_EMISSIVE_UV} uniform to given values.
+///
+/// @param {Asset.GMShader} _shader The shader to set the uniforms for.
+/// @param {Array<Real>} _uv The new base opacity texture UVs as `[left, top, right bottom]`
+/// (same as function `texture_get_uvs` returns).
+function bbmod_shader_set_emissive_uv(_shader, _uv)
+{
+	gml_pragma("forceinline");
+	shader_set_uniform_f(
+		shader_get_uniform(_shader, BBMOD_U_EMISSIVE_UV),
+		_uv[0],
+		_uv[1],
+		_uv[2],
+		_uv[3]);
+}
+
+/// @macro {String} Name of a fragment shader uniform of type `float` that
+/// equals 1 when the material is two-sided or 0 when it is not. If a material
+/// is two-sided, normal vectors of backfaces are flipped before shading.
+#macro BBMOD_U_TWO_SIDED "bbmod_TwoSided"
+
+/// @func bbmod_shader_set_two_sided(_shader, _twoSided)
+///
+/// @desc Sets the {@link BBMOD_U_TWO_SIDED} uniform.
+///
+/// @param {Asset.GMShader} _shader The shader to set the uniform for.
+/// @param {Bool} _twoSided Whether the material is two-sided.
+function bbmod_shader_set_two_sided(_shader, _twoSided)
+{
+	gml_pragma("forceinline");
+	shader_set_uniform_f(
+		shader_get_uniform(_shader, BBMOD_U_TWO_SIDED),
+		_twoSided ? 1.0 : 0.0);
 }
 
 /// @macro {String} Name of a fragment shader uniform of type `float` that holds
@@ -422,7 +508,6 @@ function bbmod_shader_set_alpha_test(_shader, _value)
 		_value);
 }
 
-
 /// @macro {String} Name of a fragment shader uniform of type `vec3` that holds
 /// the world-space camera position.
 /// @see bbmod_camera_set_position
@@ -436,7 +521,7 @@ function bbmod_shader_set_alpha_test(_shader, _value)
 /// @param {Asset.GMShader} _shader The shader to set the uniform for.
 /// @param {Struct.BBMOD_Vec3} [_pos] The camera position. If `undefined`,
 /// then the value set by {@link bbmod_camera_set_position} is used.
-function bbmod_shader_set_cam_pos(_shader, _pos=undefined)
+function bbmod_shader_set_cam_pos(_shader, _pos = undefined)
 {
 	gml_pragma("forceinline");
 	_pos ??= global.__bbmodCameraPosition;
@@ -458,7 +543,7 @@ function bbmod_shader_set_cam_pos(_shader, _pos=undefined)
 /// @param {Asset.GMShader} _shader The shader to set the uniform for.
 /// @param {Real} [_zfar] The new Z far value. Defaults to the value set using
 /// {@link bbmod_camera_set_zfar} if `undefined`.
-function bbmod_shader_set_zfar(_shader, _zfar=undefined)
+function bbmod_shader_set_zfar(_shader, _zfar = undefined)
 {
 	gml_pragma("forceinline");
 	_zfar ??= global.__bbmodZFar;
@@ -480,7 +565,7 @@ function bbmod_shader_set_zfar(_shader, _zfar=undefined)
 /// @param {Asset.GMShader} _shader The shader to set the uniform for.
 /// @param {Real} [_value] The camera exposure. If `undefined`,
 /// then the value set by {@link bbmod_camera_set_exposure} is used.
-function bbmod_shader_set_exposure(_shader, _value=undefined)
+function bbmod_shader_set_exposure(_shader, _value = undefined)
 {
 	gml_pragma("forceinline");
 	shader_set_uniform_f(
@@ -552,7 +637,7 @@ function bbmod_shader_set_soft_distance(_shader, _value)
 /// `undefined`, then the value set by {@link bbmod_fog_set_start} is used.
 /// @param {Real} [_end] The distance at which the fog has maximum intensity.
 /// If `undefined`, then the value set by {@link bbmod_fog_set_end} is used.
-function bbmod_shader_set_fog(_shader, _color=undefined, _intensity=undefined, _start=undefined, _end=undefined)
+function bbmod_shader_set_fog(_shader, _color = undefined, _intensity = undefined, _start = undefined, _end = undefined)
 {
 	gml_pragma("forceinline");
 	_color ??= global.__bbmodFogColor;
@@ -612,7 +697,8 @@ function bbmod_shader_set_fog(_shader, _color=undefined, _intensity=undefined, _
 /// {@link bbmod_light_ambient_set_dir} is used.
 /// @param {Bool} [_isLightmapped] Use `true` in case the shader renders
 /// lightmapped models. Defaults to `false.`
-function bbmod_shader_set_ambient_light(_shader, _up=undefined, _down=undefined, _dir=undefined, _isLightmapped=false)
+function bbmod_shader_set_ambient_light(_shader, _up = undefined, _down = undefined, _dir = undefined, _isLightmapped =
+	false)
 {
 	gml_pragma("forceinline");
 	if (!_isLightmapped || global.__bbmodAmbientAffectLightmap)
@@ -671,7 +757,7 @@ function bbmod_shader_set_ambient_light(_shader, _up=undefined, _down=undefined,
 /// lightmapped models. Defaults to `false.`
 ///
 /// @see BBMOD_DirectionalLight
-function bbmod_shader_set_directional_light(_shader, _light=undefined, _isLightmapped=false)
+function bbmod_shader_set_directional_light(_shader, _light = undefined, _isLightmapped = false)
 {
 	gml_pragma("forceinline");
 	_light ??= global.__bbmodDirectionalLight;
@@ -748,50 +834,50 @@ function bbmod_shader_set_ssao(_shader, _ssao)
 /// the light is not enabled, then it is not passed.
 /// @param {Bool} [_isLightmapped] Use `true` in case the shader renders
 /// lightmapped models. Defaults to `false.`
-function bbmod_shader_set_ibl(_shader, _ibl=undefined, _isLightmapped=false)
+function bbmod_shader_set_ibl(_shader, _ibl = undefined, _isLightmapped = false)
 {
 	gml_pragma("forceinline");
 
-		var _texture = pointer_null;
-		var _texel;
+	var _texture = pointer_null;
+	var _texel;
 
-		_ibl ??= global.__bbmodImageBasedLight;
+	_ibl ??= global.__bbmodImageBasedLight;
 
-		if (_ibl != undefined
-			&& _ibl.Enabled
-			&& (!_isLightmapped || _ibl.AffectLightmaps))
-		{
-			_texture = _ibl.Texture;
-			_texel = _ibl.Texel;
-		}
+	if (_ibl != undefined
+		&& _ibl.Enabled
+		&& (!_isLightmapped || _ibl.AffectLightmaps))
+	{
+		_texture = _ibl.Texture;
+		_texel = _ibl.Texel;
+	}
 
-		if (global.__bbmodReflectionProbeTexture != pointer_null)
-		{
-			_texture = global.__bbmodReflectionProbeTexture;
-			_texel = texture_get_texel_height(_texture);
-		}
+	if (global.__bbmodReflectionProbeTexture != pointer_null)
+	{
+		_texture = global.__bbmodReflectionProbeTexture;
+		_texel = texture_get_texel_height(_texture);
+	}
 
-		if (_texture != pointer_null)
-		{
-			var _uIBL = shader_get_sampler_index(_shader, BBMOD_U_IBL);
+	if (_texture != pointer_null)
+	{
+		var _uIBL = shader_get_sampler_index(_shader, BBMOD_U_IBL);
 
-			texture_set_stage(_uIBL, _texture);
-			gpu_set_tex_mip_enable_ext(_uIBL, mip_off)
-			gpu_set_tex_filter_ext(_uIBL, true);
-			gpu_set_tex_repeat_ext(_uIBL, false);
-			shader_set_uniform_f(
-				shader_get_uniform(_shader, BBMOD_U_IBL_TEXEL),
-				_texel, _texel);
-			shader_set_uniform_f(
-				shader_get_uniform(_shader, BBMOD_U_IBL_ENABLE),
-				1.0);
-		}
-		else
-		{
-			shader_set_uniform_f(
-				shader_get_uniform(_shader, BBMOD_U_IBL_ENABLE),
-				0.0);
-		}
+		texture_set_stage(_uIBL, _texture);
+		gpu_set_tex_mip_enable_ext(_uIBL, mip_off)
+		gpu_set_tex_filter_ext(_uIBL, true);
+		gpu_set_tex_repeat_ext(_uIBL, false);
+		shader_set_uniform_f(
+			shader_get_uniform(_shader, BBMOD_U_IBL_TEXEL),
+			_texel, _texel);
+		shader_set_uniform_f(
+			shader_get_uniform(_shader, BBMOD_U_IBL_ENABLE),
+			1.0);
+	}
+	else
+	{
+		shader_set_uniform_f(
+			shader_get_uniform(_shader, BBMOD_U_IBL_ENABLE),
+			0.0);
+	}
 }
 
 /// @macro {String} Name of a fragment shader uniform of type
@@ -820,7 +906,7 @@ function bbmod_shader_set_ibl(_shader, _ibl=undefined, _isLightmapped=false)
 /// {@link bbmod_light_punctual_add} are passed. Only enabled lights will be used!
 /// @param {Bool} [_isLightmapped] Use `true` in case the shader renders
 /// lightmapped models. Defaults to `false.`
-function bbmod_shader_set_punctual_lights(_shader, _lights=undefined, _isLightmapped=false)
+function bbmod_shader_set_punctual_lights(_shader, _lights = undefined, _isLightmapped = false)
 {
 	gml_pragma("forceinline");
 
@@ -838,7 +924,7 @@ function bbmod_shader_set_punctual_lights(_shader, _lights=undefined, _isLightma
 
 	var i = 0;
 
-	repeat (array_length(_lights))
+	repeat(array_length(_lights))
 	{
 		var _light = _lights[i++];
 
@@ -899,10 +985,12 @@ function bbmod_shader_set_punctual_lights(_shader, _lights=undefined, _isLightma
 /// for the first terrain layer rendered in a single draw call.
 #macro BBMOD_U_TERRAIN_BASE_OPACITY_0 "gm_BaseTexture"
 
+/* beautify ignore:start */
+
 /// @macro {String} Name of a fragment shader uniform of type `sampler2D` that
 /// holds normal smoothness/roughness texture for the first terrain layer rendered
 /// in a single draw call.
-#macro BBMOD_U_TERRAIN_NORMAL_W_0     (BBMOD_U_TERRAIN_NORMAL_W + "0")
+#macro BBMOD_U_TERRAIN_NORMAL_W_0 (BBMOD_U_TERRAIN_NORMAL_W + "0")
 
 /// @macro {String} Name of a fragment shader uniform of type `float` that holds
 /// whether the first terrain material layer uses roughness workflow (1.0) or not (0.0).
@@ -916,7 +1004,7 @@ function bbmod_shader_set_punctual_lights(_shader, _lights=undefined, _isLightma
 /// @macro {String} Name of a fragment shader uniform of type `sampler2D` that
 /// holds normal smoothness/roughness texture for the second terrain layer rendered
 /// in a single draw call.
-#macro BBMOD_U_TERRAIN_NORMAL_W_1     (BBMOD_U_TERRAIN_NORMAL_W + "1")
+#macro BBMOD_U_TERRAIN_NORMAL_W_1 (BBMOD_U_TERRAIN_NORMAL_W + "1")
 
 /// @macro {String} Name of a fragment shader uniform of type `float` that holds
 /// whether the second terrain material layer uses roughness workflow (1.0) or not (0.0).
@@ -930,7 +1018,7 @@ function bbmod_shader_set_punctual_lights(_shader, _lights=undefined, _isLightma
 /// @macro {String} Name of a fragment shader uniform of type `sampler2D` that
 /// holds normal smoothness/roughness texture for the third terrain layer rendered
 /// in a single draw call.
-#macro BBMOD_U_TERRAIN_NORMAL_W_2     (BBMOD_U_TERRAIN_NORMAL_W + "2")
+#macro BBMOD_U_TERRAIN_NORMAL_W_2 (BBMOD_U_TERRAIN_NORMAL_W + "2")
 
 /// @macro {String} Name of a fragment shader uniform of type `float` that holds
 /// whether the third terrain material layer uses roughness workflow (1.0) or not (0.0).
@@ -959,6 +1047,8 @@ function bbmod_shader_set_punctual_lights(_shader, _lights=undefined, _isLightma
 /// the index of a channel to read from the splatmap for the third terrain layer
 /// rendered in a draw call.
 #macro BBMOD_U_SPLATMAP_INDEX_2 (BBMOD_U_SPLATMAP_INDEX + "2")
+
+/* beautify ignore:end */
 
 /// @macro {String} Name of a fragment shader uniform of type `sampler2D` that
 /// holds the colormap texture.

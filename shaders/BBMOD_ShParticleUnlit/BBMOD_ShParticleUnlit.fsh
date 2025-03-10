@@ -57,6 +57,9 @@ uniform sampler2D bbmod_Subsurface;
 // RGBA: RGBM encoded emissive color
 uniform sampler2D bbmod_Emissive;
 
+// If 1.0 then normal is flipped before shading of backfaces
+uniform float bbmod_TwoSided;
+
 // Pixels with alpha less than this value will be discarded
 uniform float bbmod_AlphaTest;
 
@@ -76,7 +79,7 @@ uniform float bbmod_Exposure;
 // G-buffer surface.
 uniform sampler2D bbmod_GBuffer;
 
-// Distance over which the particle smoothly dissappears when getting closer to
+// Distance over which the particle smoothly disappears when getting closer to
 // geometry rendered in the depth buffer.
 uniform float bbmod_SoftDistance;
 
@@ -290,9 +293,7 @@ Material UnpackMaterial(
 	Material m = CreateMaterial();
 
 	// Base color and opacity
-	vec4 baseOpacity = texture2D(texBaseOpacity,
-		uv
-		);
+	vec4 baseOpacity = texture2D(texBaseOpacity, uv);
 	m.Base = xGammaToLinear(baseOpacity.rgb);
 	m.Opacity = baseOpacity.a;
 
@@ -300,12 +301,13 @@ Material UnpackMaterial(
 	vec4 normalW = texture2D(texNormalW,
 		uv
 		);
-	m.Normal = normalize(TBN * (normalW.rgb * 2.0 - 1.0));
 
-	if (!gl_FrontFacing)
+	if (bbmod_TwoSided == 1.0 && !gl_FrontFacing)
 	{
-		m.Normal *= -1.0;
+		TBN[2] *= -1.0;
 	}
+
+	m.Normal = normalize(TBN * (normalW.rgb * 2.0 - 1.0));
 
 	if (isRoughness == 1.0)
 	{
@@ -337,7 +339,9 @@ Material UnpackMaterial(
 	}
 
 	// Emissive color
-	m.Emissive = xGammaToLinear(xDecodeRGBM(texture2D(texEmissive, uv)));
+	m.Emissive = xGammaToLinear(xDecodeRGBM(texture2D(texEmissive,
+		uv
+	)));
 
 	return m;
 }

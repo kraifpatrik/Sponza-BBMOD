@@ -63,6 +63,13 @@ uniform vec4 bbmod_BaseOpacityUV;
 uniform vec4 bbmod_NormalWUV;
 // UVs of the Material texture
 uniform vec4 bbmod_MaterialUV;
+// UVs of the Subsurface texture
+uniform vec4 bbmod_SubsurfaceUV;
+// UVs of the Emissive texture
+uniform vec4 bbmod_EmissiveUV;
+
+// If 1.0 then normal is flipped before shading of backfaces
+uniform float bbmod_TwoSided;
 
 // Pixels with alpha less than this value will be discarded
 uniform float bbmod_AlphaTest;
@@ -125,9 +132,59 @@ uniform vec2 bbmod_IBLTexel;
 // Punctual lights
 
 // [(x, y, z, range), (r, g, b, m), ...]
-uniform vec4 bbmod_LightPunctualDataA[2 * BBMOD_MAX_PUNCTUAL_LIGHTS];
+uniform vec4 bbmod_LightPunctualDataA[(BBMOD_MAX_PUNCTUAL_LIGHTS + BBMOD_MAX_PUNCTUAL_LIGHTS)];
 // [(isSpotLight, dcosInner, dcosOuter), (dX, dY, dZ), ...]
-uniform vec3 bbmod_LightPunctualDataB[2 * BBMOD_MAX_PUNCTUAL_LIGHTS];
+uniform vec3 bbmod_LightPunctualDataB[(BBMOD_MAX_PUNCTUAL_LIGHTS + BBMOD_MAX_PUNCTUAL_LIGHTS)];
+
+vec4 BBMOD_GetPunctualLightDataA(int index)
+{
+#if defined(_YY_GLSL_) || defined(_YY_HLSL11_) || defined(_YY_PSSL_)
+	return bbmod_LightPunctualDataA[index];
+#else
+	if (index == 0)       return bbmod_LightPunctualDataA[0];
+	else if (index == 1)  return bbmod_LightPunctualDataA[1];
+	else if (index == 2)  return bbmod_LightPunctualDataA[2];
+	else if (index == 3)  return bbmod_LightPunctualDataA[3];
+	else if (index == 4)  return bbmod_LightPunctualDataA[4];
+	else if (index == 5)  return bbmod_LightPunctualDataA[5];
+	else if (index == 6)  return bbmod_LightPunctualDataA[6];
+	else if (index == 7)  return bbmod_LightPunctualDataA[7];
+	else if (index == 8)  return bbmod_LightPunctualDataA[8];
+	else if (index == 9)  return bbmod_LightPunctualDataA[9];
+	else if (index == 10) return bbmod_LightPunctualDataA[10];
+	else if (index == 11) return bbmod_LightPunctualDataA[11];
+	else if (index == 12) return bbmod_LightPunctualDataA[12];
+	else if (index == 13) return bbmod_LightPunctualDataA[13];
+	else if (index == 14) return bbmod_LightPunctualDataA[14];
+	else if (index == 15) return bbmod_LightPunctualDataA[15];
+	else                  return vec4(0.0);
+#endif
+}
+
+vec3 BBMOD_GetPunctualLightDataB(int index)
+{
+#if defined(_YY_GLSL_) || defined(_YY_HLSL11_) || defined(_YY_PSSL_)
+	return bbmod_LightPunctualDataB[index];
+#else
+	if (index == 0)       return bbmod_LightPunctualDataB[0];
+	else if (index == 1)  return bbmod_LightPunctualDataB[1];
+	else if (index == 2)  return bbmod_LightPunctualDataB[2];
+	else if (index == 3)  return bbmod_LightPunctualDataB[3];
+	else if (index == 4)  return bbmod_LightPunctualDataB[4];
+	else if (index == 5)  return bbmod_LightPunctualDataB[5];
+	else if (index == 6)  return bbmod_LightPunctualDataB[6];
+	else if (index == 7)  return bbmod_LightPunctualDataB[7];
+	else if (index == 8)  return bbmod_LightPunctualDataB[8];
+	else if (index == 9)  return bbmod_LightPunctualDataB[9];
+	else if (index == 10) return bbmod_LightPunctualDataB[10];
+	else if (index == 11) return bbmod_LightPunctualDataB[11];
+	else if (index == 12) return bbmod_LightPunctualDataB[12];
+	else if (index == 13) return bbmod_LightPunctualDataB[13];
+	else if (index == 14) return bbmod_LightPunctualDataB[14];
+	else if (index == 15) return bbmod_LightPunctualDataB[15];
+	else                  return vec3(0.0);
+#endif
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // Shadow mapping
@@ -557,23 +614,24 @@ Material UnpackMaterial(
 {
 	Material m = CreateMaterial();
 
+	vec2 spriteUv = (uv - bbmod_BaseOpacityUV.xy) / (bbmod_BaseOpacityUV.zw - bbmod_BaseOpacityUV.xy);
+
 	// Base color and opacity
-	vec4 baseOpacity = texture2D(texBaseOpacity,
-		mix(bbmod_BaseOpacityUV.xy, bbmod_BaseOpacityUV.zw, uv)
-		);
+	vec4 baseOpacity = texture2D(texBaseOpacity, uv);
 	m.Base = xGammaToLinear(baseOpacity.rgb);
 	m.Opacity = baseOpacity.a;
 
 	// Normal vector and smoothness/roughness
 	vec4 normalW = texture2D(texNormalW,
-		mix(bbmod_NormalWUV.xy, bbmod_NormalWUV.zw, uv)
+		mix(bbmod_NormalWUV.xy, bbmod_NormalWUV.zw, spriteUv)
 		);
-	m.Normal = normalize(TBN * (normalW.rgb * 2.0 - 1.0));
 
-	if (!gl_FrontFacing)
+	if (bbmod_TwoSided == 1.0 && !gl_FrontFacing)
 	{
-		m.Normal *= -1.0;
+		TBN[2] *= -1.0;
 	}
+
+	m.Normal = normalize(TBN * (normalW.rgb * 2.0 - 1.0));
 
 	if (isRoughness == 1.0)
 	{
@@ -588,7 +646,7 @@ Material UnpackMaterial(
 
 	// Material properties
 	vec4 materialProps = texture2D(texMaterial,
-		mix(bbmod_MaterialUV.xy, bbmod_MaterialUV.zw, uv)
+		mix(bbmod_MaterialUV.xy, bbmod_MaterialUV.zw, spriteUv)
 		);
 
 	if (isMetallic == 1.0)
@@ -605,11 +663,15 @@ Material UnpackMaterial(
 	}
 
 	// Subsurface (color and intensity)
-	vec4 subsurface = texture2D(texSubsurface, uv);
+	vec4 subsurface = texture2D(texSubsurface,
+		mix(bbmod_SubsurfaceUV.xy, bbmod_SubsurfaceUV.zw, spriteUv)
+	);
 	m.Subsurface = vec4(xGammaToLinear(subsurface.rgb).rgb, subsurface.a);
 
 	// Emissive color
-	m.Emissive = xGammaToLinear(xDecodeRGBM(texture2D(texEmissive, uv)));
+	m.Emissive = xGammaToLinear(xDecodeRGBM(texture2D(texEmissive,
+		mix(bbmod_EmissiveUV.xy, bbmod_EmissiveUV.zw, spriteUv)
+	)));
 
 	return m;
 }
@@ -743,32 +805,32 @@ void PBRShader(Material material, float depth)
 	lightSpecular *= ssao;
 
 	// Punctual lights
-	for (int i = 0; i < BBMOD_MAX_PUNCTUAL_LIGHTS; ++i)
-	{
-		vec4 positionRange = bbmod_LightPunctualDataA[i * 2];
-		vec4 colorAlpha = bbmod_LightPunctualDataA[(i * 2) + 1];
-		vec3 isSpotInnerOuter = bbmod_LightPunctualDataB[i * 2];
-		vec3 direction = bbmod_LightPunctualDataB[(i * 2) + 1];
-		vec3 color = xGammaToLinear(colorAlpha.rgb) * colorAlpha.a;
+	// for (int i = 0; i < BBMOD_MAX_PUNCTUAL_LIGHTS; ++i)
+	// {
+	// 	vec4 positionRange = bbmod_LightPunctualDataA[i * 2];
+	// 	vec4 colorAlpha = bbmod_LightPunctualDataA[(i * 2) + 1];
+	// 	vec3 isSpotInnerOuter = bbmod_LightPunctualDataB[i * 2];
+	// 	vec3 direction = bbmod_LightPunctualDataB[(i * 2) + 1];
+	// 	vec3 color = xGammaToLinear(colorAlpha.rgb) * colorAlpha.a;
 
-		if (isSpotInnerOuter.x == 1.0)
-		{
-			DoSpotLightPS(
-				positionRange.xyz, positionRange.w, color,
-				(bbmod_ShadowCasterIndex == float(i)) ? shadow : 0.0,
-				direction, isSpotInnerOuter.y, isSpotInnerOuter.z,
-				v_vVertex, N, V, material,
-				lightDiffuse, lightSpecular, lightSubsurface);
-		}
-		else
-		{
-			DoPointLightPS(
-				positionRange.xyz, positionRange.w, color,
-				(bbmod_ShadowCasterIndex == float(i)) ? shadow : 0.0,
-				v_vVertex, N, V, material,
-				lightDiffuse, lightSpecular, lightSubsurface);
-		}
-	}
+	// 	if (isSpotInnerOuter.x == 1.0)
+	// 	{
+	// 		DoSpotLightPS(
+	// 			positionRange.xyz, positionRange.w, color,
+	// 			(bbmod_ShadowCasterIndex == float(i)) ? shadow : 0.0,
+	// 			direction, isSpotInnerOuter.y, isSpotInnerOuter.z,
+	// 			v_vVertex, N, V, material,
+	// 			lightDiffuse, lightSpecular, lightSubsurface);
+	// 	}
+	// 	else
+	// 	{
+	// 		DoPointLightPS(
+	// 			positionRange.xyz, positionRange.w, color,
+	// 			(bbmod_ShadowCasterIndex == float(i)) ? shadow : 0.0,
+	// 			v_vVertex, N, V, material,
+	// 			lightDiffuse, lightSpecular, lightSubsurface);
+	// 	}
+	// }
 
 	// Lightmap
 

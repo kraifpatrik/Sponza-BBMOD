@@ -229,9 +229,7 @@ Material UnpackMaterial(
 	Material m = CreateMaterial();
 
 	// Base color and opacity
-	vec4 baseOpacity = texture2D(texBaseOpacity,
-		uv
-		);
+	vec4 baseOpacity = texture2D(texBaseOpacity, uv);
 	m.Base = xGammaToLinear(baseOpacity.rgb);
 	m.Opacity = baseOpacity.a;
 
@@ -239,12 +237,8 @@ Material UnpackMaterial(
 	vec4 normalW = texture2D(texNormalW,
 		uv
 		);
-	m.Normal = normalize(TBN * (normalW.rgb * 2.0 - 1.0));
 
-	if (!gl_FrontFacing)
-	{
-		m.Normal *= -1.0;
-	}
+	m.Normal = normalize(TBN * (normalW.rgb * 2.0 - 1.0));
 
 	if (isRoughness == 1.0)
 	{
