@@ -29,7 +29,7 @@ x += lengthdir_x(_forward, camera.Direction) + lengthdir_x(_right, camera.Direct
 y += lengthdir_y(_forward, camera.Direction) + lengthdir_y(_right, camera.Direction - 90);
 z += _up;
 
-camera.AspectRatio = window_get_width() / window_get_height();
+camera.AspectRatio = bbmod_window_get_width() / bbmod_window_get_height();
 
 var _directionPrev = camera.Direction;
 var _directionUpPrev = camera.DirectionUp;
