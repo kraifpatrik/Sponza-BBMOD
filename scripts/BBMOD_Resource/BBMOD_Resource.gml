@@ -29,6 +29,10 @@ function BBMOD_Resource() constructor
 	/// @private
 	__manager = undefined;
 
+	/// @var {String} Key under which is this resource stored in manager map.
+	/// @private
+	__resourceId = undefined;
+
 	/// @var {Real} Number of resource "lives". If it reaches 0, the resource is
 	/// destroyed.
 	/// @private
@@ -66,18 +70,7 @@ function BBMOD_Resource() constructor
 		//return self;
 	};
 
-	/// @func check_file(_file[, _sha1[, _callback]])
-	///
-	/// @param {String} _file
-	/// @param {String} [_sha1]
-	/// @param {Function} [_callback]
-	///
-	/// @return {Bool}
-	///
-	/// @throws {BBMOD_Exception}
-	///
-	/// @private
-	static check_file = function (_file, _sha1 = undefined, _callback = undefined)
+	static __check_file = function (_file, _sha1 = undefined, _callback = undefined)
 	{
 		var _err = undefined;
 
@@ -125,7 +118,7 @@ function BBMOD_Resource() constructor
 	{
 		Path = _file;
 
-		check_file(_file, _sha1);
+		__check_file(_file, _sha1);
 
 		var _buffer = buffer_load(_file);
 		buffer_seek(_buffer, buffer_seek_start, 0);
@@ -201,7 +194,7 @@ function BBMOD_Resource() constructor
 	{
 		Path = _file;
 
-		if (!check_file(_file, _sha1, _callback ?? bbmod_empty_callback))
+		if (!__check_file(_file, _sha1, _callback ?? bbmod_empty_callback))
 		{
 			return self;
 		}
@@ -286,8 +279,30 @@ function BBMOD_Resource() constructor
 	{
 		if (__manager != undefined)
 		{
-			ds_map_delete(__manager.__resources, Path);
+			var _resources = __manager.__resources;
+			if (Path != undefined && ds_map_exists(_resources, Path))
+			{
+				ds_map_delete(_resources, Path);
+			}
+			else if (__resourceId != undefined && ds_map_exists(_resources, __resourceId))
+			{
+				ds_map_delete(_resources, __resourceId);
+			}
+			else
+			{
+				var _key = ds_map_find_first(_resources);
+				repeat(ds_map_size(_resources))
+				{
+					if (_resources[?  _key] == self)
+					{
+						ds_map_delete(_resources, _key);
+						break;
+					}
+					_key = ds_map_find_next(_resources, _key);
+				}
+			}
 			__manager = undefined;
+			__resourceId = undefined;
 		}
 		return undefined;
 	};

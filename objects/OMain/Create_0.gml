@@ -2,7 +2,7 @@ renderer = new BBMOD_DeferredRenderer();
 renderer.UseAppSurface = true;
 renderer.EnableShadows = true;
 renderer.EnableSSAO = true;
-renderer.SSAORadius = 64;
+renderer.SSAORadius = 2000;
 renderer.SSAODepthRange = 10;
 renderer.SSAOPower = 2;
 
@@ -12,7 +12,7 @@ renderer.PostProcessor = postProcessor;
 
 dof = new BBMOD_DepthOfFieldEffect();
 dof.AutoFocus = true;
-//dof.SampleCount = 64;
+dof.SampleCount = 64;
 dof.BlurScaleNear = 0.5;
 dof.BokehShape = 0;
 postProcessor.add_effect(dof);
@@ -71,3 +71,7 @@ sunshafts.LightDirection = sun.Direction;
 reflectionProbe = new BBMOD_ReflectionProbe(new BBMOD_Vec3(0, 0, 1));
 reflectionProbe.Infinite = true;
 bbmod_reflection_probe_add(reflectionProbe);
+
+frames = 0;
+sum = 0;
+count = 0;

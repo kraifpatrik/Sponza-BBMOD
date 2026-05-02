@@ -36,17 +36,7 @@ function BBMOD_OBJImporter(): BBMOD_Importer() constructor
 	/// _objImporter.ImportMaterials = true;
 	/// var _model = _objImporter.import("model.obj");
 	/// _objImporter = _objImporter.destroy();
-	///
-	/// /// @desc Async - Image Loaded event
-	/// BBMOD_RESOURCE_MANAGER.async_image_loaded_update(async_load);
 	/// ```
-	///
-	/// @note Please note that if this is enabled, {@link BBMOD_RESOURCE_MANAGER}
-	/// will be used for loading textures and you will need to call its method
-	/// {@link BBMOD_ResourceManager.async_image_loaded_update} to make this work
-	/// properly!
-	///
-	/// @see BBMOD_RESOURCE_MANAGER
 	ImportMaterials = false;
 
 	__vertices = ds_list_create();
@@ -115,19 +105,8 @@ function BBMOD_OBJImporter(): BBMOD_Importer() constructor
 				case "map_Kd":
 				{
 					var _spritePath = filename_path(_path) + _line;
-					var _scope = {
-						Material: _material,
-						SpritePath: _spritePath
-					};
-					BBMOD_RESOURCE_MANAGER.load(_spritePath, undefined, method(_scope, function (_err, _res)
-					{
-						if (_err != undefined)
-						{
-							__bbmod_warning("Could not open file \"{0}\"!", [SpritePath]);
-							return;
-						}
-						Material.BaseOpacity = sprite_get_texture(_res.Raw, 0);
-					}));
+					var _res = BBMOD_RESOURCE_MANAGER.load_sync(_spritePath);
+					_material.BaseOpacity = sprite_get_texture(_res.Raw, 0);
 				}
 				break;
 			}
@@ -168,8 +147,6 @@ function BBMOD_OBJImporter(): BBMOD_Importer() constructor
 
 		var _meshBuilder = undefined;
 		var _split = array_create(2);
-		var _face = array_create(3);
-		var _vertexInd = array_create(3);
 
 		var _node = _root;
 		var _material = undefined;
@@ -323,51 +300,68 @@ function BBMOD_OBJImporter(): BBMOD_Importer() constructor
 				{
 					_meshBuilder ??= new BBMOD_MeshBuilder();
 
-					bbmod_string_split_on_first(_line, " ", _split);
-					_face[@ 0] = _split[0];
-					bbmod_string_split_on_first(_split[1], " ", _split);
-					_face[@ 1] = _split[0];
-					bbmod_string_split_on_first(_split[1], " ", _split);
-					_face[@ 2] = _split[0];
+					// Collecting vertices from the f line
+					var _N = 0;
+					var _faceVerts = [];
+					var _rem = _line;
 
-					for (var i = 0; i < 3; ++i)
+					while (_rem != "")
 					{
-						bbmod_string_split_on_first(_face[i], "/", _split);
-						var _v = (real(_split[0]) - 1) * 3;
-
-						bbmod_string_split_on_first(_split[1], "/", _split);
-						var _t = (_split[0] != "")
-							? (real(_split[0]) - 1) * 2
-							: -1;
-
-						bbmod_string_split_on_first(_split[1], "/", _split);
-						var _n = (real(_split[0]) - 1) * 3;
-
-						var _vertex = new BBMOD_Vertex(_vformat);
-						_vertex.Position.X = __vertices[|  _v];
-						_vertex.Position.Y = __vertices[|  _v + 1];
-						_vertex.Position.Z = __vertices[|  _v + 2];
-
-						_vertex.Normal.X = __normals[|  _n];
-						_vertex.Normal.Y = __normals[|  _n + 1];
-						_vertex.Normal.Z = __normals[|  _n + 2];
-
-						if (_t != -1)
+						bbmod_string_split_on_first(_rem, " ", _split);
+						if (_split[0] != "")
 						{
-							_vertex.TextureCoord.X = __textureCoords[|  _t];
-							_vertex.TextureCoord.Y = __textureCoords[|  _t + 1];
+							array_push(_faceVerts, _split[0]);
+							++_N;
+						}
+						_rem = _split[1];
+					}
+
+					if (_N >= 3)
+					{
+						var _polyInd = array_create(_N);
+						for (var _i = 0; _i < _N; ++_i)
+						{
+							bbmod_string_split_on_first(_faceVerts[_i], "/", _split);
+							var _v = (real(_split[0]) - 1) * 3;
+
+							bbmod_string_split_on_first(_split[1], "/", _split);
+							var _t = (_split[0] != "")
+								? (real(_split[0]) - 1) * 2
+								: -1;
+
+							bbmod_string_split_on_first(_split[1], "/", _split);
+							var _n = (real(_split[0]) - 1) * 3;
+
+							var _vertex = new BBMOD_Vertex(_vformat);
+							_vertex.Position.X = __vertices[|  _v];
+							_vertex.Position.Y = __vertices[|  _v + 1];
+							_vertex.Position.Z = __vertices[|  _v + 2];
+
+							_vertex.Normal.X = __normals[|  _n];
+							_vertex.Normal.Y = __normals[|  _n + 1];
+							_vertex.Normal.Z = __normals[|  _n + 2];
+
+							if (_t != -1)
+							{
+								_vertex.TextureCoord.X = __textureCoords[|  _t];
+								_vertex.TextureCoord.Y = __textureCoords[|  _t + 1];
+							}
+
+							_polyInd[_i] = _meshBuilder.add_vertex(_vertex);
 						}
 
-						_vertexInd[@ i] = _meshBuilder.add_vertex(_vertex);
-					}
-
-					if (InvertWinding)
-					{
-						_meshBuilder.add_face(_vertexInd[2], _vertexInd[1], _vertexInd[0]);
-					}
-					else
-					{
-						_meshBuilder.add_face(_vertexInd[0], _vertexInd[1], _vertexInd[2]);
+						// Fan triangulate
+						for (var _i = 1; _i < _N - 1; ++_i)
+						{
+							if (InvertWinding)
+							{
+								_meshBuilder.add_face(_polyInd[_i + 1], _polyInd[_i], _polyInd[0]);
+							}
+							else
+							{
+								_meshBuilder.add_face(_polyInd[0], _polyInd[_i], _polyInd[_i + 1]);
+							}
+						}
 					}
 				}
 				break;

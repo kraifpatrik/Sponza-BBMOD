@@ -31,7 +31,7 @@
 /// retrieve a reference to it, if it is already loaded.
 /// ```gml
 /// /// @desc Create event
-/// model = OMain.resourceManager.load("Data/Model.bbmod");
+/// model = OMain.resourceManager.load_async("Data/Model.bbmod");
 ///
 /// /// @desc Clean Up event
 /// // Free the reference. This is not necessary if you do not want to unload
@@ -80,6 +80,7 @@ function BBMOD_ResourceManager() constructor
 		}
 		__resources[?  _uniqueName] = _resource;
 		_resource.__manager = self;
+		_resource.__resourceId = _uniqueName;
 		return self;
 	};
 
@@ -117,7 +118,9 @@ function BBMOD_ResourceManager() constructor
 		{
 			throw new BBMOD_Exception("Resource not found!");
 		}
-		return __resources[?  _pathOrUniqueName].ref();
+
+		var _resource = __resources[?  _pathOrUniqueName];
+		return _resource.ref();
 	};
 
 	/// @func get_or_add(_uniqueName, _onAdd)
@@ -157,40 +160,19 @@ function BBMOD_ResourceManager() constructor
 		return _res;
 	};
 
-	/// @func load(_path[, _sha1][, _onLoad])
+	/// @func __load_impl(_path, _sha1, _async, _onLoad)
 	///
-	/// @desc Asynchronously loads a resource from a file or retrieves
-	/// a reference to it, if it is already loaded.
+	/// @desc
 	///
-	/// @param {String} _path The path to the resource.
-	/// @param {String} [_sha1] Expected SHA1 of the file. If the actual
-	/// one does not match with this, then the resource will not be loaded. Use
-	/// `undefined` if you do not want to check the SHA1 of the file.
-	/// @param {Function} [_onLoad] A function to execute when the
-	/// resource is loaded or if an error occurs while loading it. It must take
-	/// the error as the first argument and the resource as the second argument.
-	/// If no error occurs, then `undefined` is passed. If the resource was already
-	/// loaded when calling this function, then this callback is not executed.
+	/// @param {String} _path
+	/// @param {String} _sha1
+	/// @param {Bool} _async
+	/// @param {Function} _onLoad
 	///
-	/// @return {Struct.BBMOD_Resource} The resource or `undefined`.
+	/// @return {Struct.BBMOD_Resource}
 	///
-	/// @note Currently supported files formats are `*.bbmod` for {@link BBMOD_Model},
-	/// `*.bbanim` for {@link BBMOD_Animation}, `*.bbmat` for {@link BBMOD_Material}
-	/// and `*.png`, `*.gif`, `*.jpg/jpeg` for {@link BBMOD_Sprite}.
-	///
-	/// Since version 3.17.0, this can also automatically load model's materials
-	/// from BBMAT files when {@link BBMOD_ResourceManager.LoadMaterials} is set
-	/// to `true`. If you're loading for example a model called `Tree.bbmod`,
-	/// which has materials "Trunk" and "Leaves", it first tries to load them
-	/// from files `Tree_Trunk.bbmat` and `Tree_Leaves.bbmat`. If these files
-	/// don't exist, then it tries to load them without the `Tree_` prefix, i.e.
-	/// `Trunk.bbmat` and `Leaves.bbmat`. If even these are not present, then
-	/// the material slots are left with the default values. If the BBMAT files
-	/// do exist, then the `_onLoad` callback is called after all of them are
-	/// loaded!
-	///
-	/// @see BBMOD_ResourceManager.LoadMaterials
-	static load = function (_path, _sha1 = undefined, _onLoad = undefined)
+	/// @private
+	static __load_impl = function (_path, _sha1, _async, _onLoad)
 	{
 		if (is_method(_sha1))
 		{
@@ -268,20 +250,55 @@ function BBMOD_ResourceManager() constructor
 						_textureSha1 = _propertyValue[$ "SHA1"];
 					}
 
-					_texturePath = bbmod_path_get_absolute(_texturePath, filename_dir(_pathAbsolute));
+					var _isSprite = string_starts_with(_texturePath, "sprite://");
+					if (!_isSprite)
+					{
+						_texturePath = bbmod_path_get_absolute(_texturePath, filename_dir(_pathAbsolute));
+					}
 
 					var _sprite;
+					var _subimage = 0;
+
 					if (has(_texturePath))
 					{
 						_sprite = get(_texturePath);
 					}
 					else
 					{
-						_sprite = new BBMOD_Sprite(_texturePath, _textureSha1);
+						_sprite = new BBMOD_Sprite();
+
+						if (_isSprite)
+						{
+							var _prefixLength = 9; //string_length("sprite://");
+							var _spriteNameAndSubimage = string_split(string_delete(_texturePath, 1,
+								_prefixLength), ":");
+							var _spriteName = _spriteNameAndSubimage[0];
+
+							if (array_length(_spriteNameAndSubimage) > 1)
+							{
+								_subimage = real(_spriteNameAndSubimage[1]);
+							}
+
+							var _asset = asset_get_index(_spriteName);
+							if (_asset == -1)
+							{
+								throw BBMOD_Exception($"Invalid texture {_spriteName}!");
+							}
+
+							_sprite.Raw = _asset;
+							_sprite.Width = sprite_get_width(_asset);
+							_sprite.Height = sprite_get_height(_asset);
+							_sprite.Owned = false;
+						}
+						else
+						{
+							_sprite.from_file(_texturePath, _textureSha1);
+						}
+
 						add(_texturePath, _sprite);
 					}
 
-					_json[$  _property] = _sprite.get_texture();
+					_json[$  _property] = _sprite.get_texture(_subimage);
 				}
 			}
 
@@ -329,26 +346,33 @@ function BBMOD_ResourceManager() constructor
 		}
 
 		_res.__manager = self;
+		_res.__resourceId = _path;
 		var _manager = self;
 		var _context = {
 			Path: _path,
 			LoadMaterials: _isModel && LoadMaterials,
 			Manager: _manager,
+			Async: _async,
 			Callback: _onLoad,
 		};
 
 		++Loading;
 
-		_res.from_file_async(_path, _sha1, method(_context, function (_err, _res)
+		var _callback = method(_context, function (_err, _res)
 		{
 			--Manager.Loading;
+
+			if (_res.__manager != Manager)
+			{
+				return;
+			}
 
 			if (_err == undefined && LoadMaterials)
 			{
 				// Try to load its materials
 				var _modelName = filename_change_ext(filename_name(Path), "");
 				var _counter = {
-					Value: 0
+					Value: 0,
 				};
 				var _args = [];
 
@@ -362,6 +386,7 @@ function BBMOD_ResourceManager() constructor
 							Model: _res,
 							Index: i,
 							Counter: _counter,
+							Async: Async,
 							Callback: Callback,
 						},
 						function (_err, _res)
@@ -370,7 +395,9 @@ function BBMOD_ResourceManager() constructor
 							{
 								Model.Materials[@ Index] = _res;
 							}
-							if (Counter.Value-- == 0
+
+							--Counter.Value;
+							if (Counter.Value == 0
 								&& Callback != undefined)
 							{
 								Callback(undefined, Model);
@@ -414,7 +441,7 @@ function BBMOD_ResourceManager() constructor
 				var a = 0;
 				repeat(array_length(_args) / 2)
 				{
-					Manager.load(_args[a], undefined, _args[a + 1]);
+					Manager.__load_impl(_args[a], undefined, Async, _args[a + 1]);
 					a += 2;
 				}
 
@@ -430,11 +457,165 @@ function BBMOD_ResourceManager() constructor
 			{
 				Callback(_err, _res);
 			}
-		}));
+		});
+
+		if (_async)
+		{
+			_res.from_file_async(_path, _sha1, _callback);
+		}
+		else
+		{
+			_res.from_file(_path, _sha1);
+			_callback(undefined, _res);
+		}
 
 		_resources[?  _path] = _res;
 
 		return _res;
+	};
+
+	/// @func load_sync(_path[, _sha1])
+	///
+	/// @desc Synchronously loads a resource from a file or retrieves
+	/// a reference to it, if it is already loaded.
+	///
+	/// @param {String} _path The path to the resource.
+	/// @param {String} [_sha1] Expected SHA1 of the file. If the actual
+	/// one does not match with this, then the resource will not be loaded. Use
+	/// `undefined` if you do not want to check the SHA1 of the file.
+	///
+	/// @return {Struct.BBMOD_Resource} The resource or `undefined`.
+	///
+	/// @note Currently supported files formats are `*.bbmod` for {@link BBMOD_Model},
+	/// `*.bbanim` for {@link BBMOD_Animation}, `*.bbmat` for {@link BBMOD_Material}
+	/// and `*.png`, `*.gif`, `*.jpg/jpeg` for {@link BBMOD_Sprite}.
+	///
+	/// Since version 3.17.0, this can also automatically load model's materials
+	/// from BBMAT files when {@link BBMOD_ResourceManager.LoadMaterials} is set
+	/// to `true`. If you're loading for example a model called `Tree.bbmod`,
+	/// which has materials "Trunk" and "Leaves", it first tries to load them
+	/// from files `Tree_Trunk.bbmat` and `Tree_Leaves.bbmat`. If these files
+	/// don't exist, then it tries to load them without the `Tree_` prefix, i.e.
+	/// `Trunk.bbmat` and `Leaves.bbmat`. If even these are not present, then
+	/// the material slots are left with the default values.
+	///
+	/// @see BBMOD_ResourceManager.LoadMaterials
+	static load_sync = function (_path, _sha1 = undefined)
+	{
+		gml_pragma("forceinline");
+		return __load_impl(_path, _sha1, false, undefined);
+	};
+
+	/// @func load_async(_path[, _sha1][, _onLoad])
+	///
+	/// @desc Asynchronously loads a resource from a file or retrieves
+	/// a reference to it, if it is already loaded.
+	///
+	/// @param {String} _path The path to the resource.
+	/// @param {String} [_sha1] Expected SHA1 of the file. If the actual
+	/// one does not match with this, then the resource will not be loaded. Use
+	/// `undefined` if you do not want to check the SHA1 of the file.
+	/// @param {Function} [_onLoad] A function to execute when the
+	/// resource is loaded or if an error occurs while loading it. It must take
+	/// the error as the first argument and the resource as the second argument.
+	/// If no error occurs, then `undefined` is passed. If the resource was already
+	/// loaded when calling this function, then this callback is not executed.
+	///
+	/// @return {Struct.BBMOD_Resource} The resource or `undefined`.
+	///
+	/// @note Currently supported files formats are `*.bbmod` for {@link BBMOD_Model},
+	/// `*.bbanim` for {@link BBMOD_Animation}, `*.bbmat` for {@link BBMOD_Material}
+	/// and `*.png`, `*.gif`, `*.jpg/jpeg` for {@link BBMOD_Sprite}.
+	///
+	/// Since version 3.17.0, this can also automatically load model's materials
+	/// from BBMAT files when {@link BBMOD_ResourceManager.LoadMaterials} is set
+	/// to `true`. If you're loading for example a model called `Tree.bbmod`,
+	/// which has materials "Trunk" and "Leaves", it first tries to load them
+	/// from files `Tree_Trunk.bbmat` and `Tree_Leaves.bbmat`. If these files
+	/// don't exist, then it tries to load them without the `Tree_` prefix, i.e.
+	/// `Trunk.bbmat` and `Leaves.bbmat`. If even these are not present, then
+	/// the material slots are left with the default values. If the BBMAT files
+	/// do exist, then the `_onLoad` callback is called after all of them are
+	/// loaded!
+	///
+	/// @see BBMOD_ResourceManager.LoadMaterials
+	static load_async = function (_path, _sha1 = undefined, _onLoad = undefined)
+	{
+		gml_pragma("forceinline");
+		return __load_impl(_path, _sha1, true, _onLoad);
+	};
+
+	/// @func load(_path[, _sha1][, _onLoad])
+	///
+	/// @desc Asynchronously loads a resource from a file or retrieves
+	/// a reference to it, if it is already loaded.
+	///
+	/// @param {String} _path The path to the resource.
+	/// @param {String} [_sha1] Expected SHA1 of the file. If the actual
+	/// one does not match with this, then the resource will not be loaded. Use
+	/// `undefined` if you do not want to check the SHA1 of the file.
+	/// @param {Function} [_onLoad] A function to execute when the
+	/// resource is loaded or if an error occurs while loading it. It must take
+	/// the error as the first argument and the resource as the second argument.
+	/// If no error occurs, then `undefined` is passed. If the resource was already
+	/// loaded when calling this function, then this callback is not executed.
+	///
+	/// @return {Struct.BBMOD_Resource} The resource or `undefined`.
+	///
+	/// @deprecated Please use {@link BBMOD_ResourceManager.load_async} instead.
+	static load = load_async;
+
+	/// @func remove(_resourceOrPath)
+	///
+	/// @desc Removes a resource from the manager, keeping its reference count.
+	///
+	/// @param {Struct.BBMOD_Resource, String} _resourceOrPath Either a resource
+	/// or a path (string).
+	///
+	/// @return {Struct.BBMOD_ResourceManager} Returns `self`.
+	///
+	/// @throws {BBMOD_Exception} If the resource is not added to this resource
+	/// manager.
+	static remove = function (_resourceOrPath)
+	{
+		gml_pragma("forceinline");
+		var _resource = is_struct(_resourceOrPath)
+			? _resourceOrPath : __resources[?  _resourceOrPath];
+		if (_resource == undefined || _resource.__manager != self)
+		{
+			throw new BBMOD_Exception("Resource not added to this resource manager!");
+		}
+		if (_resource.Path != undefined && ds_map_exists(__resources, _resource.Path))
+		{
+			ds_map_delete(__resources, _resource.Path);
+		}
+		else if (ds_map_exists(__resources, _resource.__resourceId))
+		{
+			ds_map_delete(__resources, _resource.__resourceId);
+		}
+		else
+		{
+			var _found = false;
+			var _key = ds_map_find_first(__resources);
+			repeat(ds_map_size(__resources))
+			{
+				if (__resources[?  _key] == _resource)
+				{
+					ds_map_delete(__resources, _key);
+					_found = true;
+					break;
+				}
+				_key = ds_map_find_next(__resources, _key);
+			}
+			if (!_found)
+			{
+				// This should never happen!
+				throw new BBMOD_Exception("Resource not found in the resource manager!");
+			}
+		}
+		_resource.__manager = undefined;
+		_resource.__resourceId = undefined;
+		return self;
 	};
 
 	/// @func free(_resourceOrPath)
@@ -448,15 +629,21 @@ function BBMOD_ResourceManager() constructor
 	/// @return {Struct.BBMOD_ResourceManager} Returns `self`.
 	static free = function (_resourceOrPath)
 	{
-		// Note: Resource removes itself from the map
+		gml_pragma("forceinline");
+		// Note: Resource removes itself from the map when destroyed
 		var _resources = __resources;
 		if (is_struct(_resourceOrPath))
 		{
 			_resourceOrPath.free();
 		}
+		else if (ds_map_exists(_resources, _resourceOrPath))
+		{
+			var _resource = _resources[?  _resourceOrPath];
+			_resource.free();
+		}
 		else
 		{
-			_resources[?  _resourceOrPath].free();
+			throw new BBMOD_Exception("Resource not found!");
 		}
 		return self;
 	};

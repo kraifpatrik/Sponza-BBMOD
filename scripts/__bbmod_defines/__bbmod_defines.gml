@@ -1,5 +1,7 @@
 /// @module Core
 
+/* beautify ignore:start */
+
 ////////////////////////////////////////////////////////////////////////////////
 //
 // BBMOD release version
@@ -12,7 +14,7 @@
 #macro BBMOD_RELEASE_MINOR 22
 
 /// @macro {Real} The patch version number of this BBMOD release.
-#macro BBMOD_RELEASE_PATCH 3
+#macro BBMOD_RELEASE_PATCH 8
 
 /// @macro {String} The version of this BBMOD release as a string ("major.minor.patch" format).
 #macro BBMOD_RELEASE_STRING $"{BBMOD_RELEASE_MAJOR}.{BBMOD_RELEASE_MINOR}.{BBMOD_RELEASE_PATCH}"
@@ -29,3 +31,5 @@
 /// @macro {Real} The current minor version of BBMOD and BBANIM files.
 /// @see BBMOD_VERSION_MAJOR
 #macro BBMOD_VERSION_MINOR 4
+
+/* beautify ignore:end */
