@@ -39,16 +39,14 @@ camera = new BBMOD_Camera();
 camera.FollowObject = self;
 camera.MouseSensitivity = 0.5;
 
-var _freezeOnLoad = function (_err, _res)
+modSponza = BBMOD_RESOURCE_MANAGER.load_sync("Data/Sponza/Sponza.bbmod");
+for (var i = array_length(modSponza.Meshes) - 1; i >= 0; --i)
 {
-	if (_res)
-	{
-		_res.freeze();
-	}
-};
+	modSponza.Meshes[i].update_bbox();
+}
+modSponza.freeze();
 
-modSponza = BBMOD_RESOURCE_MANAGER.load("Data/Sponza/Sponza.bbmod", _freezeOnLoad);
-modSky = BBMOD_RESOURCE_MANAGER.load("Data/BBMOD/Models/Sphere.bbmod", _freezeOnLoad);
+modSky = BBMOD_RESOURCE_MANAGER.load_sync("Data/BBMOD/Models/Sphere.bbmod").freeze();
 
 matSky = BBMOD_MATERIAL_SKY.clone();
 sprSky = sprite_add("Data/BBMOD/Skies/Sky+60.png", 1, false, true, 0, 0);
@@ -75,3 +73,5 @@ bbmod_reflection_probe_add(reflectionProbe);
 frames = 0;
 sum = 0;
 count = 0;
+
+//show_debug_overlay(true, true);

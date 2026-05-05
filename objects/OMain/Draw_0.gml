@@ -11,4 +11,9 @@ new BBMOD_Matrix().ApplyWorld();
 
 draw_clear(c_black);
 camera.apply();
+
+//bbmod_render_statistics_start();
+
 renderer.render();
+
+//bbmod_render_statistics_end();
